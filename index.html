@@ -22080,5 +22080,187 @@ ready(function(){
 })();
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f32a9b0f60e0fe',t:'MTc4NzQxNTIyMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+
+<!-- ============================================================
+     FULL RESET FIX v1
+     ------------------------------------------------------------
+     BUG (gozaresh-e karbar): "vaghti full reset mikonam hamechi
+     reset nemishe, level-am va avatar-am sar-e jashoon-e".
+
+     ELLAT (2 ta, har do ba test-e vaghei sabt shod):
+
+       1) `factoryResetBtn` in kar ro mikone:
+              localStorage.clear();  location.reload();
+          vali BEYN-E in do khat, `location.reload()` event-e
+          `pagehide` + `beforeunload` ro shellik mikone, va block-e
+          "SAVE FLUSH on tab hide/close" (khat ~18102) mige:
+              saveAll(); saveShop(); saveProfile(); ...
+          `saveAll()` moteghayer-haye JS-e hanooz-zende (persistXP,
+          menuProfile, streak, ...) ro DOBARE minevise too
+          localStorage. Yani localStorage pak mishe, baad fori
+          por mishe! test: 16 kelid -> clear -> 30 kelid.
+
+       2) IndexedDB (music / video) kollan pak nemishod, chon
+          localStorage.clear() be IndexedDB kari nadare.
+
+     RAH-E HAL (kamelan ADDITIVE — code-e ghadimi dast nakhorde):
+       - yek flag-e `__factoryResetting` mizarim ke flushAll()
+         ro khafe kone (daghighan hamun raveshi ke khod-e barname
+         baraye import ba `__importingBackup` estefade mikone).
+       - `localStorage.clear()` ro `Storage.prototype.clear` ro
+         override NEMIKONIM; bejash listener-e khodemun ro dar
+         faz-e CAPTURE mizarim ta GHABL az listener-e asli ejra she.
+       - IndexedDB (music+video) ham pak mishe.
+       - `sessionStorage` ham pak mishe.
+       - reload ba cache-bust ta hich state-e ghadimi namoone.
+     ============================================================ -->
+<script>
+(function(){
+function ready(fn){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fn);else fn();}
+ready(function(){
+
+  var btn=document.getElementById('factoryResetBtn');
+  if(!btn)return;
+
+  /* ---------- 1) flushAll ro khafe kon ----------
+     block-e "SAVE FLUSH" in shart ro dare:
+         if(window.__importingBackup)return;
+     pas kafie hamin flag ro roshan konim ta hich save-i anjam nashe. */
+  function silenceSaves(){
+    window.__importingBackup   = true;   /* flushAll ro block mikone */
+    window.__factoryResetting  = true;   /* flag-e khodemun */
+
+    /* baraye etminan-e bishtar: hameye tabe-haye save ro khali kon,
+       ta age ja-ye digei ham seda zade beshe hichi nanevise. */
+    var noop=function(){};
+    ['saveAll','saveShop','saveProfile','saveStatXP','saveTrainingDays',
+     'saveTrainingTicks','save'].forEach(function(n){
+      try{ if(typeof window[n]==='function') window[n]=noop; }catch(e){}
+    });
+
+    /* va akharin sang-e sangar: khod-e setItem ro ghofl kon. */
+    try{
+      var S=window.localStorage;
+      var realSet=S.setItem.bind(S);
+      Object.defineProperty(window.localStorage,'setItem',{
+        configurable:true,
+        value:function(){ /* dar hale factory reset — nanevis */ }
+      });
+      window.__realSetItem=realSet;
+    }catch(e){}
+  }
+
+  /* ---------- 2) IndexedDB ro pak kon ----------
+     DEGHAT (bug-i ke aval dashtam): faghat `deleteDatabase()` KAFI NIST.
+     barname khodesh connection-e baz be db dare (openMusicDB / openVideoDB
+     connection ro nemibandan), pas deleteDatabase event-e `onblocked`
+     migire va HICHI PAK NEMISHE. test kardam: har do db salem moondan.
+
+     Rah-e dorost (2 marhale):
+       A) db ro baz kon, mohtava-ye HAR object store ro `.clear()` kon,
+          baad connection ro `.close()` kon  -> dade vaghean mire.
+       B) hala ke connection baste, `deleteDatabase()` ham javab mide. */
+  function wipeOneDB(name){
+    return new Promise(function(resolve){
+      var finished=false;
+      function fin(){ if(finished)return; finished=true; resolve(); }
+      setTimeout(fin,3000);            /* hich db-i nabayad bishtar gir kone */
+      var req;
+      try{ req=indexedDB.open(name); }catch(e){ fin(); return; }
+
+      req.onerror=fin;
+      req.onblocked=fin;
+      req.onsuccess=function(e){
+        var db=e.target.result;
+        var stores=[];
+        try{ stores=Array.prototype.slice.call(db.objectStoreNames); }catch(e2){}
+
+        function killDb(){
+          try{ db.close(); }catch(e2){}
+          try{
+            var d=indexedDB.deleteDatabase(name);
+            d.onsuccess=fin; d.onerror=fin; d.onblocked=fin;
+          }catch(e2){ fin(); }
+        }
+
+        if(!stores.length){ killDb(); return; }
+
+        /* A) hameye store-ha ro khali kon */
+        try{
+          var tx=db.transaction(stores,'readwrite');
+          stores.forEach(function(s){
+            try{ tx.objectStore(s).clear(); }catch(e2){}
+          });
+          tx.oncomplete=killDb;
+          tx.onerror=killDb;
+          tx.onabort=killDb;
+        }catch(e2){ killDb(); }
+      };
+    });
+  }
+
+  function wipeIDB(){
+    if(!window.indexedDB)return Promise.resolve();
+    var names=['lvl13_music_db_v1','lvl13_videos_db_v2'];
+    var listP;
+    try{ listP=(indexedDB.databases?indexedDB.databases():Promise.resolve(null)); }
+    catch(e){ listP=Promise.resolve(null); }
+
+    return listP.catch(function(){return null;}).then(function(list){
+      if(list&&list.length){
+        var found=list.map(function(d){return d.name;}).filter(Boolean);
+        found.forEach(function(n){ if(names.indexOf(n)<0)names.push(n); });
+      }
+      return Promise.all(names.map(wipeOneDB));
+    }).catch(function(){});
+  }
+
+  /* ---------- 3) listener-e khodemun dar faz-e CAPTURE ----------
+     capture=true yani GHABL az listener-e asli ejra mishe. */
+  btn.addEventListener('click',function(e){
+    /* hamun confirm-e khodesh — age NA bezane, hichi nakon */
+    if(!confirm('⚠️ FULL RESET\n\nHame chiz pak mishe:\n'
+      +'• Level va XP\n• Avatar va profile\n• Task-ha, training, quest-ha\n'
+      +'• Coin, shop, boss-ha\n• Music, video, gallery\n• Modiriat-e adat\n\n'
+      +'In kar BARNAGASHTANI ast. Motmaeni?')){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      return;
+    }
+
+    /* jelo-ye listener-e ghadimi ro begir (ta confirm-e dovom nayad
+       va reload-e zoodras nashe) */
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    try{ btn.disabled=true; btn.textContent='⏳ Pak kardan...'; }catch(e2){}
+
+    /* aval save-ha ro khafe kon, baad pak kon */
+    silenceSaves();
+
+    try{ localStorage.clear(); }catch(e2){}
+    try{ sessionStorage.clear(); }catch(e2){}
+
+    wipeIDB().then(function(){
+      try{ localStorage.clear(); }catch(e2){}   /* bar-e dovom, mahz-e etminan */
+      /* reload-e tamiz: replace() ta history negah nadare */
+      try{
+        var u=location.href.split('#')[0].split('?')[0];
+        location.replace(u+'?fr='+Date.now());
+      }catch(e2){ location.reload(); }
+    });
+  }, true);   /* <-- CAPTURE */
+
+  /* ---------- 4) baad az reset, query-string ro tamiz kon ---------- */
+  try{
+    if(/[?&]fr=\d+/.test(location.search)){
+      history.replaceState(null,'',location.pathname);
+    }
+  }catch(e){}
+
+});
+})();
+</script>
+
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2f3ff89db876a4d',t:'MTc4NzQyMzk0NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
