@@ -9158,7 +9158,7 @@ document.getElementById("backupBtn").addEventListener("click",async ()=>{
     'lvl13_shop_state_v1','lvl13_coin_claims_v1','lvl13_boss_balance_hard_v1',
     'lvl13_daylog_v2','lvl13_pet_hunger_last_v1','lvl13_weather',
     'lvl13_videos_db_v2','lvl13_videos_fallback_v2',
-    'lvl13_custom_moves','lvl13_pose_pb','lvl13_pose_tools','lvl13_pb_wiped_v2','lvl13_game_best_v1','lvl13_stat_daily','lvl13_boss_kills_v1','lvl13_boss_pushup_v1','lvl13_punish_v1','lvl13_perf_lite_v1','lvl13_pose_fps_v1','lvl13_pose_res_v1','lvl13_boss_unlock_all_v1','lvl13_pose_rot_v1','lvl13_pose_frame_v1','lvl13_habit_v1','lvl13_antifarm_v1'
+    'lvl13_custom_moves','lvl13_pose_pb','lvl13_pose_tools','lvl13_pb_wiped_v2','lvl13_game_best_v1','lvl13_stat_daily','lvl13_boss_kills_v1','lvl13_boss_pushup_v1','lvl13_punish_v1','lvl13_perf_lite_v1','lvl13_pose_fps_v1','lvl13_pose_res_v1','lvl13_boss_unlock_all_v1','lvl13_pose_rot_v1','lvl13_pose_frame_v1','lvl13_habit_v1','lvl13_antifarm_v1','lvl13_cam_off_v1'
   ]);
   const data={};
   ALL_KEYS.forEach(k=>{try{const v=localStorage.getItem(k);if(v!==null&&v!=='')data[k]=v;}catch(e){}});
@@ -18261,6 +18261,11 @@ ready(function(){
   try{hideReadyNum();var rn=document.getElementById('bfReadyNum');if(rn)rn.remove();}catch(e){}
   var h=hud();if(h)h.remove();
   window.__bossFightRep=null;
+  try{window.__punishManualHook=null;}catch(e){}  /* CAMERA OFF MODE */
+  /* NOTE: __bossManualHook inja null NEMISHE. Panel-e dasti reference-e
+     mostaghim negah midare, vali age inja null konim va karbar panel ro
+     bebande, hook-e morde mimoone. Bejash moghe-e baz shodan-e fight-e
+     jadid dobare set mishe. */
   if(!silent)try{toast('Fight motevaghef shod — progress save shod');}catch(e){}
   try{renderShop();}catch(e){}
  }
@@ -18348,6 +18353,37 @@ ready(function(){
   if(lv<req){try{toast('\uD83D\uDD12 In boss az Lv '+req+' baz mishe');}catch(e){}return;}
   /* open free counter dar halat-e pushup, bedoone goal/mode row */
   try{var sel=document.getElementById('poseMovementSelect');if(sel)sel.value='pushup';}catch(e){}
+  /* CAMERA OFF MODE: ghollab-e sabt-e dasti. Bejaye onRep (ke be FIGHT.on
+     vabaste ast va baad az baste shodan-e modal khamoosh mishe) mostaghim
+     damage mizanim — daghighan hamun mantegh-e onRep. */
+  try{
+   window.__bossManualHook={
+    name:b.name, id:id,
+    apply:function(v){
+     var d=dmgPerRep(), tot=0;
+     for(var i=0;i<v;i++){
+      var cur=Math.max(0,(shopState.bosses[b.id]||0)-d);
+      shopState.bosses[b.id]=cur; tot+=d;
+      if(cur<=0)break;
+     }
+     try{saveShop();}catch(e){}
+     var left=shopState.bosses[b.id]||0;
+     if(left<=0){
+      try{shopState.coins=(shopState.coins||0)+b.reward;shopState.bosses[b.id]=0;saveShop();}catch(e){}
+      try{toast('\uD83C\uDFC6 '+b.name+' defeat shod! \uD83E\uDE99 +'+b.reward);}catch(e){}
+      try{if(typeof addStatXP==='function')addStatXP(['Strength'],Math.max(2,Math.round(v/10)));}catch(e){}
+      try{if(typeof awardXP==='function')awardXP(Math.max(2,Math.round(b.reward/50)),null);}catch(e){}
+      try{playGameSfx&&playGameSfx('win');}catch(e){}
+      try{confetti&&confetti();}catch(e){}
+     }else{
+      try{toast('\u2694\uFE0F -'+tot+' HP \u00B7 '+left+'/'+b.max+' munde');}catch(e){}
+      try{if(typeof addStatXP==='function')addStatXP(['Strength'],Math.max(1,Math.round(v/10)));}catch(e){}
+     }
+     try{endFight(true);}catch(e){}
+     try{renderShop();}catch(e){}
+    }
+   };
+  }catch(e){}
   try{window.openFreeCounter();}catch(e){return;}
   try{window.__lockPoseModel(true);}catch(e){}
   try{var gr=document.getElementById('poseGoalRow');if(gr)gr.style.display='none';var mr=document.getElementById('poseModeRow');if(mr)mr.style.display='none';}catch(e){}
@@ -18469,6 +18505,7 @@ ready(function(){
  }
  function complete(){
   punish.status='done';saveP(punish);
+  try{window.__punishManualHook=null;}catch(e){}  /* CAMERA OFF MODE: ghollab ro azad kon */
   ov.remove();
   if(clockIv)clearInterval(clockIv);
   try{toast('\u2705 Jarime anjam shod! Afarin \uD83D\uDCAA Emrooz ro az dast nade!');}catch(e){}
@@ -18480,6 +18517,18 @@ ready(function(){
  var camWatch=0;
  function startCameraTask(){
   var t=taskDef();
+  /* CAMERA OFF MODE: ghollab baraye sabt-e dasti (panel-e dasti azash estefade mikone) */
+  try{
+   window.__punishManualHook={
+    label:t.label, target:t.target,
+    apply:function(v){
+     if(v>punish.progress){punish.progress=v;saveP(punish);}
+     if(punish.progress>=t.target){ complete(); }
+     else { ov.style.display='flex'; render();
+      try{toast('\u2705 '+punish.progress+'/'+t.target+' sabt shod');}catch(e){} }
+    }
+   };
+  }catch(e){}
   ov.style.display='none'; /* movaghat kenar bere ta camera dide beshe */
   try{var sel=document.getElementById('poseMovementSelect');if(sel)sel.value=t.movement;}catch(e){}
   try{window.openFreeCounter();}catch(e){ov.style.display='flex';return;}
@@ -21130,6 +21179,9 @@ ready(function(){
      Tashkhis-e READY: overlay-e shomaresh (bfrnOverlay ba class
      bfrn-count) ya matn-e "Amade sho" too bfMsg. */
   function inReady(){
+    /* CAMERA OFF MODE: vaghti camera khamoosh ast, shomaresh-e "amade sho"
+       mani nadare (karbar dasti adad vared mikone) -> gard ro rad kon. */
+    try{ if(window.__isCameraOff&&window.__isCameraOff())return false; }catch(e){}
     try{
       var ov=document.getElementById('bfrnOverlay');
       if(ov&&ov.classList.contains('bfrn-count'))return true;
@@ -22296,5 +22348,419 @@ ready(function(){
 })();
 </script>
 
-</body>
+
+<!-- ============================================================
+     CAMERA OFF MODE v1  (ezafe-ye v2.7)
+     ------------------------------------------------------------
+     Khaste-ye karbar: yek gozine tu tanzimat ke camera ro dar
+     KOLL-E SYSTEM khamoosh kone:
+        jarime · record · boss · bazi-ha · varzesh · har ja-ye dige
+
+     ROSH (kamelan ADDITIVE — hich code-e ghadimi hazf/taghir nashode):
+       1) Yek "darvaze" markazi: openFreeCounter / openWorkoutCameraCounter /
+          openCardCameraChallenge / startRecordAttempt wrap mishan.
+          Vaghti camera khamoosh ast, in-ha BAZ NEMISHAN va bejash
+          yek panel-e DASTI baz mishe.
+       2) navigator.mediaDevices.getUserMedia ham ghofl mishe
+          (sangar-e akhar — age ja-i ro faramoosh karde basham,
+           camera baz ham roshan nemishe).
+       3) Har ja padash-e camera dasht, ba vared kardan-e adad
+          hamun padash dade mishe (sistem-e "sharaf" mesl-e doosh-e sard).
+
+     Kelid: lvl13_cam_off_v1   ('1' = camera khamoosh)
+     ============================================================ -->
+<style>
+#camOffBtn{font:900 11px/1 Arial,sans-serif;padding:8px 12px;border-radius:10px;cursor:pointer;
+  border:1px solid rgba(148,163,184,.45);background:rgba(15,23,42,.75);color:#cbd5e1;min-height:38px}
+#camOffBtn.cam-off{border-color:rgba(248,113,113,.6);background:rgba(69,10,10,.6);color:#fecaca}
+
+/* panel-e dasti */
+#manualOverlay{position:fixed;inset:0;z-index:12050;background:rgba(2,4,8,.93);
+  display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
+.mn-card{width:min(430px,96vw);border-radius:20px;padding:20px;text-align:center;
+  border:2px solid rgba(56,189,248,.45);background:linear-gradient(150deg,#0b1220,#050505);
+  box-shadow:0 0 50px rgba(56,189,248,.22)}
+.mn-t{font:950 19px/1.3 Arial,sans-serif;color:#fff;margin:8px 0 2px;unicode-bidi:plaintext}
+.mn-s{font:800 12px/1.6 Arial,sans-serif;color:#93c5fd;margin-bottom:12px;unicode-bidi:plaintext}
+.mn-in{width:100%;box-sizing:border-box;font:950 26px/1 Arial,sans-serif;text-align:center;
+  padding:13px;border-radius:13px;border:1px solid rgba(56,189,248,.4);
+  background:rgba(2,6,23,.9);color:#fff;margin-bottom:10px}
+.mn-row{display:flex;gap:8px}
+.mn-b{flex:1;min-height:50px;border:none;border-radius:13px;cursor:pointer;
+  font:950 15px/1 Arial,sans-serif;color:#fff}
+.mn-ok{background:linear-gradient(135deg,#0ea5e9,#2563eb)}
+.mn-no{background:rgba(100,116,139,.35);color:#cbd5e1}
+.mn-note{margin-top:10px;font:800 10.5px/1.6 Arial,sans-serif;color:#64748b;unicode-bidi:plaintext}
+.cam-hidden-by-off{display:none!important}
+</style>
+<script>
+(function(){
+function ready(fn){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fn);else fn();}
+ready(function(){
+
+  var CKEY='lvl13_cam_off_v1';
+  function camOff(){ try{return localStorage.getItem(CKEY)==='1';}catch(e){return false;} }
+  window.__isCameraOff=camOff;
+
+  /* ============ PANEL-E DASTI ============ */
+  function manualAsk(opt){
+    /* opt: {title, sub, unit, target, onOk} */
+    var old=document.getElementById('manualOverlay'); if(old)old.remove();
+    var ov=document.createElement('div'); ov.id='manualOverlay';
+    var tgt=opt.target||0;
+    ov.innerHTML='<div class="mn-card">'
+      +'<div style="font-size:40px">\uD83D\uDCF5</div>'
+      +'<div class="mn-t">'+(opt.title||'Sabt-e dasti')+'</div>'
+      +'<div class="mn-s">'+(opt.sub||'Camera khamoosh ast — adad ro dasti vared kon.')+'</div>'
+      +'<input class="mn-in" id="mnInput" type="number" inputmode="numeric" min="0" '
+        +'value="'+(tgt||'')+'" placeholder="0"/>'
+      +'<div class="mn-row">'
+      +'<button class="mn-b mn-no" id="mnCancel">Bikhial</button>'
+      +'<button class="mn-b mn-ok" id="mnOk">\u2705 Sabt kon</button>'
+      +'</div>'
+      +'<div class="mn-note">Rooye sharaf hesab mishe \u2014 vaghean anjamesh bede \uD83D\uDCAA<br>'
+      +'Baraye roshan kardan-e camera: Home \u2039 dokme-ye \uD83D\uDCF7</div>'
+      +'</div>';
+    document.body.appendChild(ov);
+    var inp=document.getElementById('mnInput');
+    try{ inp.focus(); inp.select(); }catch(e){}
+    function close(){ try{ov.remove();}catch(e){} }
+    document.getElementById('mnCancel').onclick=close;
+    document.getElementById('mnOk').onclick=function(){
+      var v=parseInt(inp.value,10)||0;
+      if(v<=0){ try{toast('\u26A0\uFE0F Adad ro vared kon');}catch(e){} return; }
+      close();
+      try{ opt.onOk&&opt.onOk(v); }catch(e){}
+    };
+    inp.addEventListener('keydown',function(e){
+      if(e.key==='Enter')document.getElementById('mnOk').click();
+      if(e.key==='Escape')close();
+    });
+  }
+  window.__manualAsk=manualAsk;
+
+  /* ============ WRAP-E DARVAZE-HA ============
+     Har kodoom az in tabe-ha camera baz mikonan. Age camera khamoosh
+     bashe, JELOSHOON GEREFTE MISHE va panel-e dasti miad. */
+
+  function wrapOnce(name, handler){
+    var f=window[name];
+    if(typeof f!=='function' || f.__camOffWrapped)return false;
+    var g=function(){
+      if(camOff()){
+        try{ handler.apply(this,arguments); }catch(e){
+          try{toast('\uD83D\uDCF5 Camera khamoosh ast');}catch(e2){}
+        }
+        return;
+      }
+      return f.apply(this,arguments);
+    };
+    g.__camOffWrapped=true;
+    g.__camOffOrig=f;
+    window[name]=g;
+    return true;
+  }
+
+  function installWraps(){
+    /* --- 1) Shomarande-ye azad (varzesh / workout modal / BOSS / JARIME) ---
+       DEGHAT: ham boss (startPushupFight) ham jarime (startCameraTask)
+       az HAMIN tabe estefade mikonan. Un-ha baad az seda zadan-e in,
+       flag-e khodeshoon ro roshan mikonan (FIGHT.on / camWatch).
+       Pas panel-e dasti bayad natije ro be UN-HA ham bede, na faghat XP. */
+    wrapOnce('openFreeCounter', function(){
+      /* sabr mikonim ta seda-zanande flag-esh ro set kone (hamun tick) */
+      setTimeout(function(){
+        var isBoss   = !!window.__bossManualHook;
+        var isPunish = !!(window.__punishManualHook);
+
+        if(isBoss){
+          /* --- BOSS: har adad = yek rep ---
+             DEGHAT (bug-i ke aval dashtam): reference-e onRep ro HAMIN ALAN
+             negah midarim. Chon ta karbar adad vared kone, modal-e camera
+             baste mishe va endFight() meghdar-e window.__bossFightRep ro
+             null mikone -> baad digeh dastres nist. */
+          var bh=window.__bossManualHook;
+          manualAsk({
+            title:'BOSS: '+((bh&&bh.name)||'Fight'),
+            sub:'Camera khamoosh ast. Chand ta push-up zadi?',
+            onOk:function(v){
+              if(!bh||typeof bh.apply!=='function'){
+                try{toast('\u26A0\uFE0F Fight faal nist');}catch(e){}
+                return;
+              }
+              bh.apply(v);
+            }
+          });
+          return;
+        }
+
+        if(isPunish){
+          /* --- JARIME: progress ro mostaghim set kon --- */
+          var pt=window.__punishManualHook;
+          manualAsk({
+            title:'JARIME \u2014 '+(pt.label||''),
+            sub:'Camera khamoosh ast. Chand ta anjam dadi? (hadaf: '+(pt.target||0)+')',
+            target:pt.target,
+            onOk:function(v){
+              try{ pt.apply(v); }catch(e){}
+            }
+          });
+          return;
+        }
+
+        /* --- VARZESH-e adi --- */
+        manualAsk({
+          title:'Tamrin-e dasti',
+          sub:'Camera khamoosh ast. Chand ta anjam dadi?',
+          onOk:function(v){
+            try{toast('\u2705 '+v+' ta sabt shod (dasti)');}catch(e){}
+            try{ if(typeof addStatXP==='function')addStatXP(['Strength'],Math.max(1,Math.round(v/10))); }catch(e){}
+          }
+        });
+      },80);
+    });
+
+    /* --- 2) Shomarande-ye workout ba esm-e harekat --- */
+    wrapOnce('openWorkoutCameraCounter', function(label){
+      manualAsk({
+        title:String(label||'Tamrin'),
+        sub:'Camera khamoosh ast. Chand ta anjam dadi?',
+        onOk:function(v){
+          try{toast('\u2705 '+v+' ta '+(label||'')+' sabt shod (dasti)');}catch(e){}
+          try{ if(typeof addStatXP==='function')addStatXP(['Strength'],Math.max(1,Math.round(v/10))); }catch(e){}
+        }
+      });
+    });
+
+    /* --- 3) Bazi-ha: challenge-e kart --- */
+    wrapOnce('openCardCameraChallenge', function(movementId,name,target,isSec){
+      manualAsk({
+        title:String(name||'Challenge'),
+        sub:'Camera khamoosh ast. '+(target||0)+' '+(isSec?'saniye':'ta')+' anjam dadi?',
+        target:target,
+        onOk:function(v){
+          if(v>=(target||0)){
+            try{ if(typeof window.__cardCamFinish==='function')window.__cardCamFinish(v); }catch(e){}
+          }else{
+            try{toast('\u26A0\uFE0F Kamtar az hadaf bood \u2014 sabt nashod');}catch(e){}
+          }
+        }
+      });
+    });
+
+    /* --- 4) Record-ha --- */
+    wrapOnce('startRecordAttempt', function(movementId){
+      var lbl=movementId;
+      try{ if(typeof moveLabel==='function')lbl=moveLabel(movementId).label; }catch(e){}
+      manualAsk({
+        title:'Record: '+lbl,
+        sub:'Camera khamoosh ast. Record-e jadidet chand bood?',
+        onOk:function(v){
+          try{
+            var pb=JSON.parse(localStorage.getItem('lvl13_pose_pb')||'{}');
+            var cur=pb[movementId]||0;
+            if(v>cur){
+              pb[movementId]=v;
+              localStorage.setItem('lvl13_pose_pb',JSON.stringify(pb));
+              try{toast('\uD83C\uDFC6 Record-e jadid: '+v+' (dasti)');}catch(e){}
+            }else{
+              try{toast('Record-e ghabli ('+cur+') behtar bood');}catch(e){}
+            }
+            if(typeof window.renderRecords==='function')window.renderRecords();
+          }catch(e){}
+        }
+      });
+    });
+  }
+
+  installWraps();
+  /* baazi tabe-ha dir-tar tarif mishan */
+  var tries=0, iv=setInterval(function(){
+    installWraps();
+    if(++tries>80)clearInterval(iv);
+  },250);
+
+  /* ============ SANGAR-E AKHAR: getUserMedia ============
+     Age ja-i ro faramoosh karde basham, camera baz ham roshan nemishe. */
+  (function(){
+    try{
+      if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)return;
+      var orig=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      if(orig.__camOffGuard)return;
+      var guarded=function(c){
+        if(camOff() && c && c.video){
+          try{toast('\uD83D\uDCF5 Camera dar tanzimat khamoosh ast');}catch(e){}
+          return Promise.reject(new DOMException('Camera disabled by user setting','NotAllowedError'));
+        }
+        return orig(c);
+      };
+      guarded.__camOffGuard=true;
+      navigator.mediaDevices.getUserMedia=guarded;
+    }catch(e){}
+  })();
+
+  /* ============ JARIME: harekat-e camera-ee -> sharaf ============ */
+  (function(){
+    /* Jarime khodesh startCameraTask seda mizane ke openFreeCounter ro
+       seda mizane -> pas khodkar be panel-e dasti mire. Vali dokme-ash
+       mineveshte "SHOROU BA CAMERA". Matn ro eslah mikonim. */
+    function fixPunishBtn(){
+      if(!camOff())return;
+      var b=document.getElementById('punishStartBtn');
+      if(b && b.textContent.indexOf('CAMERA')>=0){
+        b.innerHTML='\u270B ANJAM DADAM \u2014 SABT-E DASTI';
+      }
+    }
+    setInterval(fixPunishBtn,700);
+  })();
+
+  /* ============ DOKME-YE TANZIMAT ============ */
+  function apply(off){
+    document.body.classList.toggle('cam-off-mode',!!off);
+    var b=document.getElementById('camOffBtn');
+    if(b){
+      b.classList.toggle('cam-off',!!off);
+      b.innerHTML=off?'\uD83D\uDCF5 Camera: KHAMOOSH':'\uD83D\uDCF7 Camera: ROSHAN';
+      b.title=off?'Camera dar koll-e barname khamoosh ast \u2014 hame chi dasti sabt mishe'
+                 :'Camera roshan ast';
+    }
+    /* dokme-haye camera-ee ro makhfi kon */
+    ['workoutCameraBtn','gameCamBtn'].forEach(function(id){
+      var el=document.getElementById(id);
+      if(el)el.classList.toggle('cam-hidden-by-off',!!off);
+    });
+  }
+
+  function setOff(off){
+    try{localStorage.setItem(CKEY,off?'1':'0');}catch(e){}
+    apply(off);
+    try{toast(off?'\uD83D\uDCF5 Camera dar koll-e barname KHAMOOSH shod'
+                 :'\uD83D\uDCF7 Camera ROSHAN shod');}catch(e){}
+  }
+
+  function addBtn(){
+    if(document.getElementById('camOffBtn'))return;
+    var host=document.getElementById('perfModeBtn')||document.getElementById('homeEditBtn');
+    if(!host||!host.parentNode)return;
+    var b=document.createElement('button');
+    b.id='camOffBtn'; b.type='button';
+    b.addEventListener('click',function(){ setOff(!camOff()); });
+    host.parentNode.insertBefore(b,host.nextSibling);
+    apply(camOff());
+  }
+
+  addBtn();
+  setTimeout(addBtn,600);
+  setInterval(function(){ addBtn(); apply(camOff()); },2000);
+  apply(camOff());
+
+});
+})();
+</script>
+
+
+<!-- ============================================================
+     CAMERA OFF MODE v2  (takmil-e v1)
+     ------------------------------------------------------------
+     Do ta moshkel-e gozaresh-shode-ye karbar:
+
+     1) "Tu goshi camera kharab-e va jarime shodam -> nemitoonam
+        camera bedam, nemitoonam jarime ro anjam bedam, va chon
+        overlay-e jarime kolle safhe ro gerefte NEMITOONAM BERAM
+        TANZIMAT ke camera ro khamoosh konam."  => GIR-E KAMEL.
+
+        Rah-e hal: rooye KHOD-E overlay-e jarime yek dokme-ye
+        "📵 Camera kharab ast / khamoosh" mizarim. Ba zadanesh:
+          - camera dar koll-e barname khamoosh mishe
+          - jarime be halat-e sabt-e dasti tabdil mishe
+        Pas hatta vaghti ghofli, rah-e khorooj hast.
+
+     2) "Dokme-haye camera-ye kenar-e har set ro bardar; vaghti
+        camera khamoosh-e faghat ba click rooye set-ha kar kone."
+        => .item-camera va #workoutCameraBtn makhfi mishan.
+     ============================================================ -->
+<style>
+/* --- 2) dokme-haye camera-ye tamrin vaghti camera khamoosh ast --- */
+body.cam-off-mode .item-camera,
+body.cam-off-mode #workoutCameraBtn,
+body.cam-off-mode #gameCamBtn,
+body.cam-off-mode .rh-start{ display:none !important; }
+
+/* --- dokme-ye nejat rooye overlay-e jarime --- */
+#punishCamOff{
+  width:100%;min-height:44px;margin-top:9px;cursor:pointer;
+  border:1px solid rgba(148,163,184,.5);border-radius:12px;
+  background:rgba(30,41,59,.85);color:#cbd5e1;
+  font:900 12.5px/1.35 Arial,sans-serif;padding:9px 10px;
+}
+#punishCamOff:active{transform:scale(.98)}
+</style>
+<script>
+(function(){
+function ready(fn){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fn);else fn();}
+ready(function(){
+
+  var CKEY='lvl13_cam_off_v1';
+  function camOff(){ try{return localStorage.getItem(CKEY)==='1';}catch(e){return false;} }
+
+  /* ============ 1) DOKME-YE NEJAT ROOYE OVERLAY-E JARIME ============
+     Overlay-e jarime har bar render() mishe innerHTML ro avaz mikone,
+     pas dokme ro ba yek interval dobare mizarim (mesl-e baghi-ye
+     dokme-haye in barname). */
+  function addEscapeBtn(){
+    var ov=document.getElementById('punishOverlay');
+    if(!ov)return;
+    var card=ov.firstElementChild;
+    if(!card)return;
+    if(card.querySelector('#punishCamOff'))return;
+
+    /* faghat baraye jarime-haye camera-ee mani dare */
+    var startBtn=document.getElementById('punishStartBtn');
+    if(!startBtn)return;              /* jarime-ye honor (doosh-e sard) dokme nemikhad */
+    if(camOff())return;               /* alan-esh ham khamoosh-e -> lazem nist */
+
+    var b=document.createElement('button');
+    b.id='punishCamOff'; b.type='button';
+    b.innerHTML='\uD83D\uDCF5 Camera kharab ast / nadaram \u2014 KHAMOOSH kon';
+    b.addEventListener('click',function(){
+      if(!confirm('Camera dar KOLL-E barname khamoosh beshe?\n\n'
+        +'Baad az in, jarime va tamrin va boss hame ba SABT-E DASTI\n'
+        +'anjam mishan (rooye sharaf).\n\n'
+        +'Har vaght khasti az safhe-ye Home dobare roshanesh kon.'))return;
+      try{localStorage.setItem(CKEY,'1');}catch(e){}
+      try{document.body.classList.add('cam-off-mode');}catch(e){}
+      try{toast('\uD83D\uDCF5 Camera khamoosh shod \u2014 hala dasti sabt kon');}catch(e){}
+      b.remove();
+      /* dokme-ye shorou ro be halat-e dasti bebar */
+      try{
+        var sb=document.getElementById('punishStartBtn');
+        if(sb)sb.innerHTML='\u270B ANJAM DADAM \u2014 SABT-E DASTI';
+      }catch(e){}
+    });
+    card.appendChild(b);
+  }
+
+  setInterval(addEscapeBtn,700);
+  addEscapeBtn();
+
+  /* ============ 2) DOKME-HAYE CAMERA-YE TAMRIN ============
+     CSS bala kar-e asli ro mikone. Inja faghat motmaen mishim
+     class-e body dorost set shode (age v1 dir load she). */
+  function syncBody(){
+    try{ document.body.classList.toggle('cam-off-mode', camOff()); }catch(e){}
+  }
+  syncBody();
+  setInterval(syncBody,1500);
+
+  /* ============ 3) SET-HA: click-e adi hamishe kar kone ============
+     Vaghti camera khamoosh ast, karbar faghat rooye set-ha click
+     mikone. In ghablan ham kar mikard (setSetTick), pas chizi ro
+     taghir nemidim — faghat motmaen mishim dokme-ye camera
+     jelo-ye click nagire (ke ba display:none hal shod). */
+
+});
+})();
+</script>
+
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3a269524bc0349b',t:'MTc4OTI1MjgwMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
