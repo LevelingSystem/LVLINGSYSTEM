@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <style id="bootHide">html,body{visibility:hidden!important}html{background:#020504!important}</style>
-<title>LEVELING SYSTEM RELEASE</title>
+<title>LEVELING SYSTEM (SADE - BEDUN CAMERA)</title>
 <!-- GHEYRE-FAAL SHOD (v2.7): manifest.json kenar-e file nist va rooye
      file:// khata-ye CORS mide. Faghat baraye nasb be onvan-e PWA
      (rooye http/https) karbord dare — baraye file-e offline lazem nist.
@@ -1976,7 +1976,7 @@ body.perf-lite .hb-shield-keep,body.perf-lite .hb-lvlup-n{box-shadow:none!import
 <div class="page" id="pageRecords">
 <div class="page-header"><button class="back-btn" data-back>←</button><span class="page-title">🏆 Records</span></div>
 <div class="section-inner">
-  <div class="game-note">🏆 Record faghat az hamin safhe sabt mishe — START bezan va rekordet ro sabt kon!</div>
+  <div class="game-note">🏆 Record-ha dasti sabt mishan.</div>
   <div id="recordsHero" class="records-hero"></div>
 </div>
 </div>
@@ -2392,7 +2392,7 @@ body.perf-lite .hb-shield-keep,body.perf-lite .hb-lvlup-n{box-shadow:none!import
     <div class="game-actions">
       <button id="gameDrawBtn" class="info" type="button">🎴 KarT Bekesh</button>
       <button id="gameDoneBtn" class="backup" type="button">✅ Anjam Shod (+XP)</button>
-      <button id="gameCamBtn" class="info" type="button" style="border-color:rgba(255,138,61,.6)">Ba Camera Sabet Kon (2x XP)</button>
+      <button id="gameCamBtn" class="info" type="button" style="border-color:rgba(255,138,61,.6)">✋ Anjam Dadam (sabt-e dasti)</button>
     </div>
     <div class="game-history" id="gameHistory"></div>
   </div>
@@ -2566,7 +2566,7 @@ body.perf-lite .hb-shield-keep,body.perf-lite .hb-lvlup-n{box-shadow:none!import
 
 <!-- ========== MODALS (Outside pages) ========== -->
 <div id="lightboxOverlay" class="lightbox-overlay hidden"><div class="lightbox-content" id="lightboxContent"><button class="lightbox-close" id="lightboxClose" title="Close" aria-label="Close"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" shape-rendering="crispEdges" style="display:block"><rect width="16" height="16" fill="transparent"/><rect x="3" y="2" width="3" height="3" fill="#fecaca"/><rect x="10" y="2" width="3" height="3" fill="#fecaca"/><rect x="4" y="4" width="3" height="3" fill="#ef4444"/><rect x="9" y="4" width="3" height="3" fill="#ef4444"/><rect x="6" y="6" width="4" height="4" fill="#dc2626"/><rect x="4" y="9" width="3" height="3" fill="#ef4444"/><rect x="9" y="9" width="3" height="3" fill="#ef4444"/><rect x="3" y="11" width="3" height="3" fill="#7f1d1d"/><rect x="10" y="11" width="3" height="3" fill="#7f1d1d"/></svg></button><img id="lightboxImage" src="" alt="" draggable="false"/><div class="lightbox-counter" id="lightboxCounter"></div></div></div>
-<div id="workoutModal" class="workout-modal hidden"><div class="workout-card"><h2 id="workoutTitle"></h2><div class="wsub" id="workoutSub"></div><div id="workoutLockedBanner" class="workout-locked-banner" style="display:none"><span class="lock-icon">🔒</span></div><div class="workout-edit-hint">Click rooye esm = esm + saniye/rep | Tik faghat emrooz</div><div class="workout-day-changer"><label>📅</label><select id="workoutDayChanger"></select><button id="workoutDayChangeBtn">✅</button></div><div style="text-align:center;margin-bottom:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><span class="wtag xp" id="wDayXp"></span><span class="wtag stat" id="wDayStat"></span></div><ul id="workoutList" class="workout-list"></ul><div class="workout-tool-row"><button id="workoutCameraBtn" class="workout-camera-counter" type="button">Camera Counter</button><button id="workoutAddBtn" class="workout-add-exercise" type="button">➕ Tamrin</button></div><div class="workout-progress" id="workoutProgress"></div><button id="workoutCloseBtn" class="workout-close danger">Bastan</button></div></div>
+<div id="workoutModal" class="workout-modal hidden"><div class="workout-card"><h2 id="workoutTitle"></h2><div class="wsub" id="workoutSub"></div><div id="workoutLockedBanner" class="workout-locked-banner" style="display:none"><span class="lock-icon">🔒</span></div><div class="workout-edit-hint">Click rooye esm = esm + saniye/rep | Tik faghat emrooz</div><div class="workout-day-changer"><label>📅</label><select id="workoutDayChanger"></select><button id="workoutDayChangeBtn">✅</button></div><div style="text-align:center;margin-bottom:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><span class="wtag xp" id="wDayXp"></span><span class="wtag stat" id="wDayStat"></span></div><ul id="workoutList" class="workout-list"></ul><div class="workout-tool-row"><button id="workoutCameraBtn" class="workout-camera-counter" type="button">Shomarande-ye dasti</button><button id="workoutAddBtn" class="workout-add-exercise" type="button">➕ Tamrin</button></div><div class="workout-progress" id="workoutProgress"></div><button id="workoutCloseBtn" class="workout-close danger">Bastan</button></div></div>
 <div id="eyeModal" class="workout-modal hidden"><div class="workout-card"><h2>👁 Eye Training</h2><div class="wsub">Noghte-ro ba cheshm donbal kon — har chand saniye jabeja mishe!</div><div class="eye-top" id="eyeTop" style="display:none"><span>👁 <b id="eyeHits">0</b>/15</span><span>⚡ <b id="eyeAvg">-</b> ms</span><span>⏱ <b id="eyeTime">30</b>s</span></div><div class="eye-area" id="eyeArea"><div class="eye-center"></div><div class="eye-dot" id="eyeDot" style="display:none"></div></div><div class="game-result" id="eyeResult">▶ Shorou ro bezan — noghte-ro negah kon!</div><div class="game-actions" style="margin-top:10px"><button id="eyeStartBtn" class="info" type="button">▶ Shorou</button><button id="eyeCloseBtn" class="danger" type="button">Bastan</button></div></div></div>
 <div id="pickerModal" class="picker-modal hidden"><div class="picker-card"><h3 id="pickerTitle">XP & Stats</h3><div class="picker-section-label">⭐ XP:</div><div class="xp-choices" id="xpChoices"></div><div class="picker-section-label">📊 Stats:</div><div class="stat-choices" id="statChoices"></div><div style="text-align:center;margin-top:10px"><label style="color:#aaa;font-weight:800;font-size:13px"><input type="checkbox" id="pickerNoEffect"/> No Effect</label></div><div class="picker-actions"><button id="pickerSaveBtn">💾 Save</button><button id="pickerCancelBtn" class="danger">Cancel</button></div></div></div>
 <div id="themeModal" class="theme-modal hidden"><div class="theme-card"><h3>🎨 Rang</h3><div class="theme-sub">Asli+Fasli+Rainbow+RGB</div><div id="themeGrid" class="theme-container"></div><div class="rgb-picker-box"><div class="rgb-picker-title">🎨 RGB</div><div class="rgb-picker-sub">Color picker ya adad</div><div class="rgb-row"><div class="rgb-field"><label>Rang1</label><input type="color" id="rgbColor1" value="#2df6df"/></div><div class="rgb-field"><label>Rang2</label><input type="color" id="rgbColor2" value="#22e27b"/></div></div><div class="rgb-manual"><div class="rgb-manual-title">RGB 0-255</div><div class="rgb-manual-group"><span class="rgb-group-label">Rang1</span><div class="rgb-inputs"><span class="rgb-ch">R</span><input type="number" id="rgb1R" min="0" max="255" value="45"/><span class="rgb-ch">G</span><input type="number" id="rgb1G" min="0" max="255" value="246"/><span class="rgb-ch">B</span><input type="number" id="rgb1B" min="0" max="255" value="223"/></div></div><div class="rgb-manual-group"><span class="rgb-group-label">Rang2</span><div class="rgb-inputs"><span class="rgb-ch">R</span><input type="number" id="rgb2R" min="0" max="255" value="34"/><span class="rgb-ch">G</span><input type="number" id="rgb2G" min="0" max="255" value="226"/><span class="rgb-ch">B</span><input type="number" id="rgb2B" min="0" max="255" value="123"/></div></div></div><div class="rgb-preview"><div class="rgb-preview-swatch" id="rgbPreviewSwatch"></div></div><button class="rgb-apply-btn" id="rgbApplyBtn">✅ Apply</button></div><button class="theme-close" id="themeCloseBtn">Bastan</button></div></div>
@@ -2749,7 +2749,10 @@ const RANDOM_QUESTS=[
 "✅ Hame task-haye emrooz kamel kon"
 ];
 const DAY_NAMES=["","Yekshanbe","Doshanbe","Seshanbe","Chaharshanbe","Panjshanbe","Jome","Shanbe"];
+/* BARNAME-YE GHADIMI (SYSTEM PROTOCOL jaygozin shod) — hazf nashode:
 const DEFAULT_TRAINING=[{id:"tr1",label:"Bala-tane",day:1,xp:3,stats:["Strength"],sub:"",run:"🏃 10-15min",finisher:"1min push-up",items:[{text:"Push-up",sets:6},{text:"Pull-up",sets:5},{text:"TRX row",sets:4},{text:"Dips",sets:4},{text:"Plank — 60s",sets:3}]},{id:"tr2",label:"Sorat",day:2,xp:3,stats:["Speed","Agility"],sub:"",run:"Sprint",finisher:"",items:[{text:"Sprint — 30m",sets:10},{text:"High knees — 40s",sets:5},{text:"Mountain climber — 45s",sets:4},{text:"Jump rope — 1min",sets:5}]},{id:"tr3",label:"Pa",day:3,xp:3,stats:["Strength","Balance"],sub:"",run:"🏃 10min",finisher:"",items:[{text:"Squat — 15",sets:4},{text:"Jump squat — 10",sets:5},{text:"Lunge — 12",sets:4},{text:"Wall sit — 90s",sets:3}]},{id:"tr4",label:"Recovery",day:4,xp:3,stats:["Flexibility"],sub:"",run:"🏃 20min aram",finisher:"",items:[{text:"Keshesh — 20min",sets:1},{text:"1 pa — 60s",sets:3}]},{id:"tr5",label:"Full Body",day:5,xp:4,stats:["Strength","Endurance"],sub:"",run:"🏃 5-10min",finisher:"",items:[{text:"Push-up",sets:4},{text:"Squat — 20",sets:4},{text:"Pull-up",sets:4},{text:"Burpee — 12",sets:4},{text:"Plank — 90s",sets:4}]},{id:"tr6",label:"Estegamat",day:6,xp:3,stats:["Endurance","Speed"],sub:"",run:"🏃 1.5km",finisher:"",items:[{text:"Dovidan — 1.5km",sets:1},{text:"Sprint — 200m",sets:6},{text:"Mountain climber — 60s",sets:3}]},{id:"tr7",label:"Esterahat",day:7,xp:1,stats:["Personality"],sub:"",run:"",finisher:"",items:[{text:"Esterahat — 1 rooz",sets:0}]}];
+*/
+const DEFAULT_TRAINING=[{"id":"sp_d1","label":"🔴 ROOZ 1: Upper Body Strength & Mass + Sa'ed","day":7,"xp":5,"stats":["Strength","Mind Muscle"],"sub":"Stat Focus: Strength, Mind-Muscle, Muscle Mass","run":"🏃 Garm kardan 10-15min","finisher":"🔥 Forearm Finisher: Hammer Curls 3x15 · Wrist Curls 3x20","items":[{"text":"Weighted Pull-ups (Barefiks ba vazne) — Max Reps","name":"Weighted Pull-ups (Barefiks ba vazne) — Max Reps","sets":4,"target":0,"targetType":"none","rest":60,"movement":"generic"},{"text":"Deficit Push-ups (Shena dast roo dumbell)","name":"Deficit Push-ups (Shena dast roo dumbell)","sets":4,"target":15,"targetType":"reps","rest":60,"movement":"generic"},{"text":"One-Arm Dumbbell Row (3 sekond pain amadan)","name":"One-Arm Dumbbell Row (3 sekond pain amadan)","sets":4,"target":12,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Negative Push-ups (3 sekond makse pain) — Max Reps","name":"Negative Push-ups (3 sekond makse pain) — Max Reps","sets":4,"target":0,"targetType":"none","rest":60,"movement":"generic"},{"text":"Dumbbell / Heavy Ball Overhead Press","name":"Dumbbell / Heavy Ball Overhead Press","sets":4,"target":15,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Pakage Kashesh","name":"Pakage Kashesh","sets":1,"target":10,"targetType":"minutes","rest":60,"movement":"generic"}]},{"id":"sp_d2","label":"🟡 ROOZ 2: Leg Power, Balance & Agility","day":1,"xp":5,"stats":["Strength","Balance","Agility"],"sub":"Stat Focus: Balance, Agility, Leg Power","run":"🏃 Garm kardan 10min","finisher":"","items":[{"text":"Pistol Squats (Squat tek pa) — har pa","name":"Pistol Squats (Squat tek pa) — har pa","sets":4,"target":8,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Goblet Squats (Squat amigh ba Dumbbell)","name":"Goblet Squats (Squat amigh ba Dumbbell)","sets":4,"target":15,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Walking Lunges ba Dumbbell — Gham","name":"Walking Lunges ba Dumbbell — Gham","sets":4,"target":20,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Single-Leg RDL (Deadlift tek pa) — har pa","name":"Single-Leg RDL (Deadlift tek pa) — har pa","sets":3,"target":12,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Single-Leg Calf Raises (Saq pa tek pa)","name":"Single-Leg Calf Raises (Saq pa tek pa)","sets":5,"target":20,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Pakage Kashesh","name":"Pakage Kashesh","sets":1,"target":10,"targetType":"minutes","rest":60,"movement":"generic"}]},{"id":"sp_d3","label":"🔵 ROOZ 3: Speed, Reaction, Vision & Plyometrics","day":2,"xp":5,"stats":["Speed","Reaction","Vision","Agility"],"sub":"Stat Focus: Speed, Reaction, Vision, Explosive Power","run":"🏃 Garm kardan 10min","finisher":"","items":[{"text":"Clap Push-ups (Shena enfejari ba dast zadan)","name":"Clap Push-ups (Shena enfejari ba dast zadan)","sets":4,"target":10,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Jump Squats (Squat enfejari)","name":"Jump Squats (Squat enfejari)","sets":4,"target":12,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Wall Ball Reaction Drill (bedoone tavaghof)","name":"Wall Ball Reaction Drill (bedoone tavaghof)","sets":1,"target":10,"targetType":"minutes","rest":60,"movement":"generic"},{"text":"Eye Tracking (faghat ba mardomak donbal kon)","name":"Eye Tracking (faghat ba mardomak donbal kon)","sets":1,"target":3,"targetType":"minutes","rest":60,"movement":"generic"},{"text":"Sprint Intervals — 30s sprint / 30s rah raftan","name":"Sprint Intervals — 30s sprint / 30s rah raftan","sets":8,"target":30,"targetType":"seconds","rest":60,"movement":"generic"},{"text":"Pakage Kashesh","name":"Pakage Kashesh","sets":1,"target":10,"targetType":"minutes","rest":60,"movement":"generic"}]},{"id":"sp_d4","label":"🟢 ROOZ 4: Upper Hypertrophy, Grip & Sa'ed","day":3,"xp":5,"stats":["Strength","Mind Muscle","Endurance"],"sub":"Stat Focus: Mind-Muscle, Grip Strength, Hypertrophy","run":"🏃 Garm kardan 10min","finisher":"🔥 Forearm Finisher: Pinch Grip 3 Set x Max Time","items":[{"text":"Chin-ups (dast jam baraks, 3s kontrolli) — Max Reps","name":"Chin-ups (dast jam baraks, 3s kontrolli) — Max Reps","sets":4,"target":0,"targetType":"none","rest":60,"movement":"generic"},{"text":"Archer Push-ups (5 ta har taraf)","name":"Archer Push-ups (5 ta har taraf)","sets":4,"target":10,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Heavy Ball Slams (ba tamame ghodrat)","name":"Heavy Ball Slams (ba tamame ghodrat)","sets":4,"target":15,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Chair Dips (ba dumbell roo pa)","name":"Chair Dips (ba dumbell roo pa)","sets":4,"target":15,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Towel Dead Hang (avizan ba hole) — Max Time","name":"Towel Dead Hang (avizan ba hole) — Max Time","sets":4,"target":0,"targetType":"none","rest":60,"movement":"generic"},{"text":"Pakage Kashesh","name":"Pakage Kashesh","sets":1,"target":10,"targetType":"minutes","rest":60,"movement":"generic"}]},{"id":"sp_d5","label":"🟣 ROOZ 5: Core Hardening, Endurance & Mindset","day":4,"xp":5,"stats":["Endurance","Balance","Personality"],"sub":"Stat Focus: Core Strength, Endurance, Mindset / Personality","run":"🏃 Garm kardan 10min","finisher":"💀 Burpees (Tamrine Marg): 100 Ta dar kamtarin zaman","items":[{"text":"L-Sit (pa-ha afoghi) — Max Time","name":"L-Sit (pa-ha afoghi) — Max Time","sets":4,"target":0,"targetType":"none","rest":60,"movement":"generic"},{"text":"Hanging Leg Raises (pa bala az barefiks)","name":"Hanging Leg Raises (pa bala az barefiks)","sets":4,"target":15,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Russian Twists ba Toope sangin","name":"Russian Twists ba Toope sangin","sets":4,"target":30,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Glute Bridge / Back Extension","name":"Glute Bridge / Back Extension","sets":4,"target":20,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Pakage Kashesh","name":"Pakage Kashesh","sets":1,"target":10,"targetType":"minutes","rest":60,"movement":"generic"}]},{"id":"sp_d6","label":"🟠 ROOZ 6: Full Body Power, Agility & Sa'ed","day":5,"xp":5,"stats":["Strength","Agility","Endurance"],"sub":"Stat Focus: Agility, Grip, Full Body Power","run":"🏃 Garm kardan 10min","finisher":"🔥 Forearm Finisher: Hammer Curls 3x15 · Wrist Curls 3x20","items":[{"text":"MODARE MARG: 10 Barefiks + 20 Shena + 30 Squat = 1 Door","name":"MODARE MARG: 10 Barefiks + 20 Shena + 30 Squat = 1 Door","sets":4,"target":0,"targetType":"none","rest":60,"movement":"generic"},{"text":"Farmer's Walk (sangintarin dumbell-ha)","name":"Farmer's Walk (sangintarin dumbell-ha)","sets":4,"target":60,"targetType":"seconds","rest":60,"movement":"generic"},{"text":"Shuttle Run — 5 metr, 10 bar","name":"Shuttle Run — 5 metr, 10 bar","sets":4,"target":10,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Pakage Kashesh","name":"Pakage Kashesh","sets":1,"target":10,"targetType":"minutes","rest":60,"movement":"generic"}]},{"id":"sp_d7","label":"⚪ ROOZ 7: Active Recovery, Vision, Mind & Flexibility","day":6,"xp":5,"stats":["Flexibility","Intelligence","Vision","Personality"],"sub":"Stat Focus: Flexibility, Intelligence, Mind-Muscle, Recovery","run":"🚶 Rah raftan-e aram 20min","finisher":"🥶 Cold Shower: 3 ta 5 daghighe zir ab-e kamelan sard","items":[{"text":"Pakage Kashesh (tamrinat kamel kasheshe badan)","name":"Pakage Kashesh (tamrinat kamel kasheshe badan)","sets":1,"target":45,"targetType":"minutes","rest":60,"movement":"generic"},{"text":"Wim Hof / Box Breathing — 4s dam/habs/bazdam/habs","name":"Wim Hof / Box Breathing — 4s dam/habs/bazdam/habs","sets":1,"target":15,"targetType":"minutes","rest":60,"movement":"generic"},{"text":"Peripheral Vision Drill (be yek noghte khire sho)","name":"Peripheral Vision Drill (be yek noghte khire sho)","sets":1,"target":10,"targetType":"minutes","rest":60,"movement":"generic"}]}];
 const DEFAULT_SECTIONS=[{title:"🌅 Morning",color:"",tasks:[]},{title:"☀️ Afternoon",color:"",tasks:[]},{title:"🌇 Sunset",color:"",tasks:[]},{title:"🌙 Night",color:"",tasks:[]}];
 const DEFAULT_STATS={"Flexibility":0,"Strength":0,"Endurance":0,"Balance":0,"Agility":0,"Speed":0,"Intelligence":0,"Mind Muscle":0,"Personality":0,"Vision":0,"Reaction":0};
 // === UTILS ===
@@ -8416,12 +8419,12 @@ function renderTraining(){
     c.appendChild(row);
   });
 }
-document.getElementById("trainingAddForm").addEventListener("submit",e=>{e.preventDefault();const name=document.getElementById("trainingNameInput").value.trim(),day=parseInt(document.getElementById("trainingDaySelect").value,10)||getTodayDay();if(!name)return;trainingDays.push({id:"tr"+Date.now(),label:cleanTrainingLabel(name),day,xp:3,stats:[],sub:"",run:"",finisher:"",items:[{text:"Tamrin 1",sets:3}]});saveTrainingDays();document.getElementById("trainingNameInput").value="";renderTraining();renderTrainingDaySelect();toast("➕ Ezafe shod");});
+document.getElementById("trainingAddForm").addEventListener("submit",e=>{e.preventDefault();const name=document.getElementById("trainingNameInput").value.trim(),day=parseInt(document.getElementById("trainingDaySelect").value,10)||getTodayDay();if(!name)return;trainingDays.push({id:"tr"+Date.now(),label:cleanTrainingLabel(name),day,xp:3,stats:[],sub:"",run:"\uD83C\uDFC3 Garm kardan 10min",finisher:"\uD83E\uDDD8 Keshesh 10min",items:[{text:"Tamrin 1",sets:3}]});saveTrainingDays();document.getElementById("trainingNameInput").value="";renderTraining();renderTrainingDaySelect();toast("➕ Ezafe shod");});
 // === WORKOUT MODAL ===
 let curWorkoutId=null;
 function openWorkout(id){if(!getTraining(id))return;curWorkoutId=id;renderWorkoutModal();document.getElementById("workoutModal").classList.remove("hidden");}
 function editTrainingXpStats(id){const d=getTraining(id);if(!d)return;openPicker(d.label,d.xp,d.stats,false,(xp,stats,ne)=>{d.xp=xp;d.stats=ne?[]:stats;ensureStatsExist(d.stats);saveTrainingDays();renderWorkoutModal();renderTraining();});}
-function renderWorkoutModal(){const id=curWorkoutId,w=getTraining(id);if(!w)return;let cleanedLegacyNotes=false;(w.items||[]).forEach(item=>{if(!item||typeof item!=="object")return;const oldNote=String(item.note||"").trim();if(oldNote){const base=String(item.text||"").trim();item.text=base?base+" — "+oldNote:oldNote;}if(Object.prototype.hasOwnProperty.call(item,"note")){delete item.note;cleanedLegacyNotes=true;}});if(cleanedLegacyNotes)saveTrainingDays();const isTd=isTrainingToday(id);document.getElementById("workoutTitle").textContent=w.label;document.getElementById("workoutSub").textContent=w.sub||"";const banner=document.getElementById("workoutLockedBanner");if(!isTd){banner.style.display="block";banner.innerHTML=`<span class="lock-icon">🔒</span>${DAY_NAMES[w.day]} — emrooz ${DAY_NAMES[getTodayDay()]}. Virayesh OK, tik na.`;}else banner.style.display="none";const dcSel=document.getElementById("workoutDayChanger");dcSel.innerHTML="";for(let d=1;d<=7;d++){const o=document.createElement("option");o.value=d;o.textContent=DAY_NAMES[d]+(d===getTodayDay()?" ★":"");dcSel.appendChild(o);}dcSel.value=String(w.day);document.getElementById("wDayXp").textContent="⭐"+w.xp;document.getElementById("wDayXp").onclick=()=>editTrainingXpStats(id);document.getElementById("wDayStat").textContent="📊["+(w.stats||[]).join(",")+"]";document.getElementById("wDayStat").onclick=()=>editTrainingXpStats(id);const list=document.getElementById("workoutList");list.innerHTML="";if(w.run&&w.run.trim()){const rl=document.createElement("li");rl.className="run";rl.textContent=w.run;rl.style.cursor="pointer";rl.addEventListener("click",()=>{const nv=prompt("Run:",w.run);if(nv!==null){w.run=nv.trim();saveTrainingDays();renderWorkoutModal();}});list.appendChild(rl);}(w.items||[]).forEach((item,ex)=>{const li=document.createElement("li");const header=document.createElement("div");header.className="item-header";const ts=document.createElement("span");ts.className="item-text";ts.textContent=item.text||"Tamrin";ts.title="Click: virayesh esm + saniye/rep";ts.setAttribute("role","button");ts.setAttribute("tabindex","0");const editExercise=()=>{if(window.openTrainingExerciseEditor){window.openTrainingExerciseEditor(id,ex,item);}else{const nv=prompt("Tamrin:",item.text||"");if(nv!==null&&nv.trim()){item.text=nv.trim();delete item.note;saveTrainingDays();renderWorkoutModal();}}};ts.addEventListener("click",editExercise);ts.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();editExercise();}});header.appendChild(ts);const cam=document.createElement("button");cam.className="item-camera";cam.type="button";cam.title="Camera Counter — 58 movement models";cam.setAttribute("aria-label","Camera Counter baraye "+(item.text||"tamrin"));cam.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" shape-rendering="crispEdges" aria-hidden="true" style="display:block;margin:auto;pointer-events:none"><rect x="4" y="4" width="10" height="10" fill="#111827"/><rect x="2" y="6" width="2" height="6" fill="#22d3ee"/><rect x="14" y="6" width="2" height="6" fill="#22d3ee"/><rect x="6" y="2" width="4" height="2" fill="#67e8f9"/><rect x="6" y="6" width="6" height="6" fill="#0e7490"/><rect x="8" y="7" width="3" height="3" fill="#cffafe"/><rect x="7" y="14" width="4" height="2" fill="#155e75"/></svg>`;cam.addEventListener("click",e=>{e.stopPropagation();if(window.openWorkoutCameraCounter)window.openWorkoutCameraCounter(item.text||"",id,ex,item);else toast("Camera dar hale load...");});header.appendChild(cam);const db=document.createElement("button");db.className="item-del";db.type="button";db.title="Hazf-e tamrin";db.setAttribute("aria-label","Hazf-e tamrin");db.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" style="display:block;margin:auto;pointer-events:none;"><rect width="16" height="16" fill="transparent"/><rect x="3" y="3" width="2" height="2" fill="#fecaca"/><rect x="11" y="3" width="2" height="2" fill="#fecaca"/><rect x="5" y="5" width="2" height="2" fill="#fb7185"/><rect x="9" y="5" width="2" height="2" fill="#fb7185"/><rect x="7" y="7" width="2" height="2" fill="#ef4444"/><rect x="5" y="9" width="2" height="2" fill="#fb7185"/><rect x="9" y="9" width="2" height="2" fill="#fb7185"/><rect x="3" y="11" width="2" height="2" fill="#be123c"/><rect x="11" y="11" width="2" height="2" fill="#be123c"/></svg>`;db.addEventListener("click",()=>{if(!confirm("Hazf?"))return;for(let i=0;i<(item.sets||0);i++)delete trainingTicks[setTickKey(id,ex,i)];w.items.splice(ex,1);saveTrainingDays();saveTrainingTicks();if(isTd)updateTrainingDayStatus(id);renderTraining();renderWorkoutModal();});header.appendChild(db);li.appendChild(header);const ctrl=document.createElement("div");ctrl.className="sets-control";const lbl=document.createElement("span");lbl.className="sets-count-label";lbl.textContent="Set:";ctrl.appendChild(lbl);const stp=document.createElement("div");stp.className="sets-stepper";const minus=document.createElement("button");minus.textContent="−";const num=document.createElement("span");num.className="sets-num";num.textContent=item.sets||0;const plus=document.createElement("button");plus.textContent="+";minus.addEventListener("click",()=>{if((item.sets||0)>0){delete trainingTicks[setTickKey(id,ex,item.sets-1)];item.sets--;saveTrainingDays();saveTrainingTicks();if(isTd)updateTrainingDayStatus(id);renderTraining();renderWorkoutModal();}});plus.addEventListener("click",()=>{item.sets=(item.sets||0)+1;saveTrainingDays();if(isTd)updateTrainingDayStatus(id);renderTraining();renderWorkoutModal();});stp.append(minus,num,plus);ctrl.appendChild(stp);li.appendChild(ctrl);if((item.sets||0)>0){const cont=document.createElement("div");cont.className="sets-container";for(let i=0;i<item.sets;i++){const si=document.createElement("label");si.className="set-item"+(isTd?"":" disabled-set");const chk=document.createElement("input");chk.type="checkbox";chk.checked=getSetTick(id,ex,i);if(!isTd)chk.disabled=true;chk.addEventListener("change",()=>{if(!isTd)return;setSetTick(id,ex,i,chk.checked);si.classList.toggle("done",chk.checked);playSound('tick');updateTrainingDayStatus(id);renderWorkoutProgress();});const t=document.createElement("span");t.textContent="Set "+(i+1);si.append(chk,t);if(chk.checked)si.classList.add("done");cont.appendChild(si);}li.appendChild(cont);}list.appendChild(li);});if(w.finisher&&w.finisher.trim()){const li=document.createElement("li");li.className="finisher";const header=document.createElement("div");header.className="item-header";const ts=document.createElement("span");ts.className="item-text";ts.textContent="🔥 "+w.finisher;ts.addEventListener("click",()=>{const nv=prompt("Finisher:",w.finisher);if(nv!==null){w.finisher=nv.trim();saveTrainingDays();renderWorkoutModal();}});header.appendChild(ts);li.appendChild(header);const cont=document.createElement("div");cont.className="sets-container";const si=document.createElement("label");si.className="set-item"+(isTd?"":" disabled-set");const chk=document.createElement("input");chk.type="checkbox";chk.checked=getFinisherTick(id);if(!isTd)chk.disabled=true;chk.addEventListener("change",()=>{if(!isTd)return;setFinisherTick(id,chk.checked);si.classList.toggle("done",chk.checked);playSound('tick');updateTrainingDayStatus(id);renderWorkoutProgress();});si.append(chk,document.createTextNode("Done"));if(chk.checked)si.classList.add("done");cont.appendChild(si);li.appendChild(cont);list.appendChild(li);}renderWorkoutProgress();}
+function renderWorkoutModal(){const id=curWorkoutId,w=getTraining(id);if(!w)return;let cleanedLegacyNotes=false;(w.items||[]).forEach(item=>{if(!item||typeof item!=="object")return;const oldNote=String(item.note||"").trim();if(oldNote){const base=String(item.text||"").trim();item.text=base?base+" — "+oldNote:oldNote;}if(Object.prototype.hasOwnProperty.call(item,"note")){delete item.note;cleanedLegacyNotes=true;}});if(cleanedLegacyNotes)saveTrainingDays();const isTd=isTrainingToday(id);document.getElementById("workoutTitle").textContent=w.label;document.getElementById("workoutSub").textContent=w.sub||"";const banner=document.getElementById("workoutLockedBanner");if(!isTd){banner.style.display="block";banner.innerHTML=`<span class="lock-icon">🔒</span>${DAY_NAMES[w.day]} — emrooz ${DAY_NAMES[getTodayDay()]}. Virayesh OK, tik na.`;}else banner.style.display="none";const dcSel=document.getElementById("workoutDayChanger");dcSel.innerHTML="";for(let d=1;d<=7;d++){const o=document.createElement("option");o.value=d;o.textContent=DAY_NAMES[d]+(d===getTodayDay()?" ★":"");dcSel.appendChild(o);}dcSel.value=String(w.day);document.getElementById("wDayXp").textContent="⭐"+w.xp;document.getElementById("wDayXp").onclick=()=>editTrainingXpStats(id);document.getElementById("wDayStat").textContent="📊["+(w.stats||[]).join(",")+"]";document.getElementById("wDayStat").onclick=()=>editTrainingXpStats(id);const list=document.getElementById("workoutList");list.innerHTML="";if(w.run&&w.run.trim()){const rl=document.createElement("li");rl.className="run";rl.textContent=w.run;rl.style.cursor="pointer";rl.addEventListener("click",()=>{const nv=prompt("Run:",w.run);if(nv!==null){w.run=nv.trim();saveTrainingDays();renderWorkoutModal();}});list.appendChild(rl);}(w.items||[]).forEach((item,ex)=>{const li=document.createElement("li");const header=document.createElement("div");header.className="item-header";const ts=document.createElement("span");ts.className="item-text";ts.textContent=item.text||"Tamrin";ts.title="Click: virayesh esm + saniye/rep";ts.setAttribute("role","button");ts.setAttribute("tabindex","0");const editExercise=()=>{if(window.openTrainingExerciseEditor){window.openTrainingExerciseEditor(id,ex,item);}else{const nv=prompt("Tamrin:",item.text||"");if(nv!==null&&nv.trim()){item.text=nv.trim();delete item.note;saveTrainingDays();renderWorkoutModal();}}};ts.addEventListener("click",editExercise);ts.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();editExercise();}});header.appendChild(ts);const cam=document.createElement("button");cam.className="item-camera";cam.type="button";cam.title="Sabt-e dasti";cam.setAttribute("aria-label","Sabt-e dasti baraye "+(item.text||"tamrin"));cam.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" shape-rendering="crispEdges" aria-hidden="true" style="display:block;margin:auto;pointer-events:none"><rect x="4" y="4" width="10" height="10" fill="#111827"/><rect x="2" y="6" width="2" height="6" fill="#22d3ee"/><rect x="14" y="6" width="2" height="6" fill="#22d3ee"/><rect x="6" y="2" width="4" height="2" fill="#67e8f9"/><rect x="6" y="6" width="6" height="6" fill="#0e7490"/><rect x="8" y="7" width="3" height="3" fill="#cffafe"/><rect x="7" y="14" width="4" height="2" fill="#155e75"/></svg>`;cam.addEventListener("click",e=>{e.stopPropagation();if(window.openWorkoutCameraCounter)window.openWorkoutCameraCounter(item.text||"",id,ex,item);else toast("Camera dar hale load...");});header.appendChild(cam);const db=document.createElement("button");db.className="item-del";db.type="button";db.title="Hazf-e tamrin";db.setAttribute("aria-label","Hazf-e tamrin");db.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true" style="display:block;margin:auto;pointer-events:none;"><rect width="16" height="16" fill="transparent"/><rect x="3" y="3" width="2" height="2" fill="#fecaca"/><rect x="11" y="3" width="2" height="2" fill="#fecaca"/><rect x="5" y="5" width="2" height="2" fill="#fb7185"/><rect x="9" y="5" width="2" height="2" fill="#fb7185"/><rect x="7" y="7" width="2" height="2" fill="#ef4444"/><rect x="5" y="9" width="2" height="2" fill="#fb7185"/><rect x="9" y="9" width="2" height="2" fill="#fb7185"/><rect x="3" y="11" width="2" height="2" fill="#be123c"/><rect x="11" y="11" width="2" height="2" fill="#be123c"/></svg>`;db.addEventListener("click",()=>{if(!confirm("Hazf?"))return;for(let i=0;i<(item.sets||0);i++)delete trainingTicks[setTickKey(id,ex,i)];w.items.splice(ex,1);saveTrainingDays();saveTrainingTicks();if(isTd)updateTrainingDayStatus(id);renderTraining();renderWorkoutModal();});header.appendChild(db);li.appendChild(header);const ctrl=document.createElement("div");ctrl.className="sets-control";const lbl=document.createElement("span");lbl.className="sets-count-label";lbl.textContent="Set:";ctrl.appendChild(lbl);const stp=document.createElement("div");stp.className="sets-stepper";const minus=document.createElement("button");minus.textContent="−";const num=document.createElement("span");num.className="sets-num";num.textContent=item.sets||0;const plus=document.createElement("button");plus.textContent="+";minus.addEventListener("click",()=>{if((item.sets||0)>0){delete trainingTicks[setTickKey(id,ex,item.sets-1)];item.sets--;saveTrainingDays();saveTrainingTicks();if(isTd)updateTrainingDayStatus(id);renderTraining();renderWorkoutModal();}});plus.addEventListener("click",()=>{item.sets=(item.sets||0)+1;saveTrainingDays();if(isTd)updateTrainingDayStatus(id);renderTraining();renderWorkoutModal();});stp.append(minus,num,plus);ctrl.appendChild(stp);li.appendChild(ctrl);if((item.sets||0)>0){const cont=document.createElement("div");cont.className="sets-container";for(let i=0;i<item.sets;i++){const si=document.createElement("label");si.className="set-item"+(isTd?"":" disabled-set");const chk=document.createElement("input");chk.type="checkbox";chk.checked=getSetTick(id,ex,i);if(!isTd)chk.disabled=true;chk.addEventListener("change",()=>{if(!isTd)return;setSetTick(id,ex,i,chk.checked);si.classList.toggle("done",chk.checked);playSound('tick');updateTrainingDayStatus(id);renderWorkoutProgress();});const t=document.createElement("span");t.textContent="Set "+(i+1);si.append(chk,t);if(chk.checked)si.classList.add("done");cont.appendChild(si);}li.appendChild(cont);}list.appendChild(li);});if(w.finisher&&w.finisher.trim()){const li=document.createElement("li");li.className="finisher";const header=document.createElement("div");header.className="item-header";const ts=document.createElement("span");ts.className="item-text";ts.textContent="🔥 "+w.finisher;ts.addEventListener("click",()=>{const nv=prompt("Finisher:",w.finisher);if(nv!==null){w.finisher=nv.trim();saveTrainingDays();renderWorkoutModal();}});header.appendChild(ts);li.appendChild(header);const cont=document.createElement("div");cont.className="sets-container";const si=document.createElement("label");si.className="set-item"+(isTd?"":" disabled-set");const chk=document.createElement("input");chk.type="checkbox";chk.checked=getFinisherTick(id);if(!isTd)chk.disabled=true;chk.addEventListener("change",()=>{if(!isTd)return;setFinisherTick(id,chk.checked);si.classList.toggle("done",chk.checked);playSound('tick');updateTrainingDayStatus(id);renderWorkoutProgress();});si.append(chk,document.createTextNode("Done"));if(chk.checked)si.classList.add("done");cont.appendChild(si);li.appendChild(cont);list.appendChild(li);}renderWorkoutProgress();}
 function renderWorkoutProgress(){const id=curWorkoutId,w=getTraining(id);if(!w)return;const isTd=isTrainingToday(id);let ts=0,ds=0;(w.items||[]).forEach((item,ex)=>{ts+=item.sets||0;for(let i=0;i<(item.sets||0);i++)if(getSetTick(id,ex,i))ds++;});if(w.finisher&&w.finisher.trim()){ts++;if(getFinisherTick(id))ds++;}document.getElementById("workoutProgress").textContent=isTd?`${ds}/${ts} set | +${w.xp} XP`:`📋 ${ts} set | +${w.xp} XP (nist emrooz)`;}
 document.getElementById("workoutDayChangeBtn").addEventListener("click",()=>{const w=getTraining(curWorkoutId);if(!w)return;const nd=parseInt(document.getElementById("workoutDayChanger").value,10);if(nd>=1&&nd<=7&&nd!==w.day){w.day=nd;saveTrainingDays();renderWorkoutModal();renderTraining();renderTrainingDaySelect();toast("📅 "+DAY_NAMES[nd]);}});
 document.getElementById("workoutCameraBtn").addEventListener("click",()=>{if(window.openFreeCounter)window.openFreeCounter();else if(window.openWorkoutCameraCounter)window.openWorkoutCameraCounter("",curWorkoutId,null);else toast("Camera dar hale load...");});
@@ -15892,16 +15895,16 @@ ready(function(){
   <form id="exerciseEditorForm" class="exercise-editor-card">
     <div class="exercise-editor-head"><h2 id="exerciseEditorTitle">ADD TAMRIN</h2><button id="exerciseEditorX" class="exercise-editor-x" type="button" aria-label="Bastan">×</button></div>
     <div class="exercise-form-grid">
-      <div class="exercise-field full"><label>HAREKAT / CAMERA MODEL</label><select id="exerciseMovement"></select></div>
+      <div class="exercise-field full" id="exMoveField"><label>NOE HAREKAT</label><select id="exerciseMovement"></select></div>
       <div class="exercise-field full"><label>ESM-E NAMAYESHI</label><input id="exerciseName" maxlength="80" required placeholder="Mesal: Push-up"/></div>
       <div class="exercise-field"><label>NOE TARGET</label><select id="exerciseTargetType"><option value="reps">Reps</option><option value="seconds">Seconds</option><option value="minutes">Minutes</option><option value="meters">Meters</option><option value="km">Kilometers</option><option value="none">No target</option></select></div>
       <div class="exercise-field"><label>MEGHDAR-E TARGET</label><input id="exerciseTarget" type="number" min="0" step="0.1" value="10"/></div>
       <div class="exercise-field"><label>TEDAD-E SET</label><input id="exerciseSets" type="number" min="1" max="99" step="1" value="3"/></div>
       <div class="exercise-field"><label>REST BEYN SET-HA (s)</label><input id="exerciseRest" type="number" min="0" max="900" step="5" value="60"/></div>
       <div class="exercise-field"><label>VAZN (kg, optional)</label><input id="exerciseWeight" type="number" min="0" step="0.5" placeholder="0"/></div>
-      <div class="exercise-field"><label>CAMERA AUTO-SET</label><input value="ON — target ke tamam shod" disabled/></div>
+      
     </div>
-    <div id="customMoveManage" class="exercise-editor-help" style="display:none;border-color:rgba(255,138,61,.5)"><b>HAREKAT-E SHOMA</b> — <button id="customMoveRename" type="button" style="background:none;border:1px solid rgba(45,246,223,.5);color:var(--text);padding:3px 10px;cursor:pointer;font:inherit;border-radius:4px">ESM-E JADID</button> <button id="customMoveDelete" type="button" style="background:none;border:1px solid rgba(255,59,72,.6);color:#ff8a94;padding:3px 10px;cursor:pointer;font:inherit;border-radius:4px;margin-inline-start:6px">HAZF</button></div><div class="exercise-editor-help">Camera model az harekati ke entekhab mikoni estefade mikone. Reps/seconds automatic set ro tik mizanan. Distance ba camera-ye sabet deghat-e metri nadare va manual tamam mishe.</div>
+    <div id="customMoveManage" class="exercise-editor-help" style="display:none;border-color:rgba(255,138,61,.5)"><b>HAREKAT-E SHOMA</b> — <button id="customMoveRename" type="button" style="background:none;border:1px solid rgba(45,246,223,.5);color:var(--text);padding:3px 10px;cursor:pointer;font:inherit;border-radius:4px">ESM-E JADID</button> <button id="customMoveDelete" type="button" style="background:none;border:1px solid rgba(255,59,72,.6);color:#ff8a94;padding:3px 10px;cursor:pointer;font:inherit;border-radius:4px;margin-inline-start:6px">HAZF</button></div><div class="exercise-editor-help">Noe harekat faghat baraye daste-bandi-ye Stat-hast. Hameye set-ha DASTI tik mikhoran.</div>
     <div class="exercise-editor-actions"><button class="exercise-editor-save" type="submit">SAVE TAMRIN</button><button id="exerciseEditorCancel" class="exercise-editor-cancel" type="button">CANCEL</button></div>
   </form>
 </div>
@@ -15974,10 +15977,10 @@ font-variant-numeric:tabular-nums;background:rgba(120,10,18,.28);animation:restP
 #poseRecBtn{border-color:rgba(255,138,61,.7)!important;color:#ffd6b0!important}
 </style><div id="poseCounterModal" class="pose-counter-modal hidden" role="dialog" aria-modal="true" aria-labelledby="poseCounterTitle" aria-hidden="true">
   <div class="pose-counter-card">
-    <div class="pose-counter-head"><div><h2 class="pose-counter-title" id="poseCounterTitle">CAMERA REP COUNTER <span style="font-size:10px;color:#22e27b;border:1px solid rgba(34,226,123,.5);border-radius:4px;padding:1px 6px;vertical-align:middle">v1.0</span></h2><div class="pose-counter-sub" id="poseCounterExercise">Offline pose processing</div></div><button id="poseCounterClose" class="pose-icon-close" type="button" aria-label="Bastan">×</button></div>
+    <div class="pose-counter-head"><div><h2 class="pose-counter-title" id="poseCounterTitle">SHOMARANDE-YE DASTI <span style="font-size:10px;color:#22e27b;border:1px solid rgba(34,226,123,.5);border-radius:4px;padding:1px 6px;vertical-align:middle">v1.0</span></h2><div class="pose-counter-sub" id="poseCounterExercise">Offline pose processing</div></div><button id="poseCounterClose" class="pose-icon-close" type="button" aria-label="Bastan">×</button></div>
     <div class="pose-movement-row" id="poseMovementRow"><label>MODEL</label><select id="poseMovementSelect" class="pose-movement-select"></select></div><div class="pose-goal-row" id="poseModeRow" style="display:none"><label>MODE</label><div class="pose-goal-btns"><button type="button" class="pose-goal-btn on" data-mode="auto">AUTO</button><button type="button" class="pose-goal-btn" data-mode="reps">REPS</button><button type="button" class="pose-goal-btn" data-mode="seconds">SEC</button><button type="button" class="pose-goal-btn" data-mode="minutes">MIN</button></div></div><div class="pose-goal-row" id="poseGoalRow" style="display:none"><label>HADAF</label><div class="pose-goal-btns"><button type="button" class="pose-goal-btn on" data-goal="free">AZAD</button><button type="button" class="pose-goal-btn" data-goal="10">10</button><button type="button" class="pose-goal-btn" data-goal="20">20</button><button type="button" class="pose-goal-btn" data-goal="30">30</button><button type="button" class="pose-goal-btn" data-goal="custom">?</button></div></div>
     
-    <div class="pose-tools" id="poseTools"><button id="poseReadyBtn" type="button" title="5 sanie vaght bede boro too position">5s AMADE</button><button id="poseVoiceBtn" type="button" title="Shomaresh-e soti">SEDA</button><button id="poseFullBtn" type="button" title="Tamam safhe">FULL SCREEN</button></div><div id="poseTrainingSync" class="pose-training-sync"><div class="pose-sync-top"><span>TRAINING SYNC</span><strong id="poseSyncTitle">Standalone counter</strong></div><div class="pose-sync-track"><div id="poseSyncFill" class="pose-sync-fill"></div></div><div id="poseSyncNote" class="pose-sync-note">Camera count only</div></div>
+    <div class="pose-tools" id="poseTools"><button id="poseReadyBtn" type="button" title="5 sanie vaght bede boro too position">5s AMADE</button><button id="poseVoiceBtn" type="button" title="Shomaresh-e soti">SEDA</button><button id="poseFullBtn" type="button" title="Tamam safhe">FULL SCREEN</button></div><div id="poseTrainingSync" class="pose-training-sync"><div class="pose-sync-top"><span>TRAINING SYNC</span><strong id="poseSyncTitle">Standalone counter</strong></div><div class="pose-sync-track"><div id="poseSyncFill" class="pose-sync-fill"></div></div><div id="poseSyncNote" class="pose-sync-note">Sabt-e dasti</div></div>
     <div class="pose-stage" id="poseStage"><video id="poseVideo" autoplay playsinline muted></video><canvas id="poseCanvas"></canvas><div id="recOverlay" class="rec-overlay hidden"><div id="recBadge" class="rec-badge hidden"><span class="rec-dot"></span>REC</div><div id="recBigNum" class="rec-bignum"></div><div id="recMsg" class="rec-msg"></div><div id="recBarWrap" class="rec-barwrap hidden"><div id="recBarFill" class="rec-barfill"></div></div></div><div id="recNamePanel" class="rec-namepanel hidden"><div class="rec-namehead">HAREKAT ZABT SHOD</div><div class="rec-namesub" id="recNameInfo">Ye esm barash entekhab kon</div><input id="poseRecNameInput" type="text" placeholder="Esm-e harekat... (mesal: Punch)" autocomplete="off"/><div class="rec-typerow"><button id="recTypeReps" type="button" class="rec-type-btn on">REPS (shomaresh)</button><button id="recTypeSec" type="button" class="rec-type-btn">SECONDS (timer)</button></div><div class="rec-namebtns"><button id="poseRecNameSave" type="button" class="rec-btn-save">SAVE</button><button id="poseRecRedo" type="button" class="rec-btn-redo">DOBARE</button><button id="poseRecNameCancel" type="button" class="rec-btn-cancel">CANCEL</button></div></div><div id="poseLoading" class="pose-loading hidden">Camera va model dar hale amade-sazi...</div><div id="poseGuide" class="pose-guide-chip warn" aria-live="polite">Start Camera ro bezan</div><div id="restCountNum" class="rest-countnum" style="display:none"></div></div>
     <div class="pose-stats"><div class="pose-stat reps" id="poseRepBox"><small id="poseCountLabel">REPS</small><strong id="poseRepCount">0</strong></div><div class="pose-stat"><small>PHASE</small><strong id="posePhase">READY</strong></div><div class="pose-stat"><small>ANGLE</small><strong id="poseAngle">—</strong></div></div>
     <div class="pose-actions"><button id="poseStartBtn" class="pose-start" type="button">START CAMERA</button><button id="poseResetBtn" class="pose-reset" type="button">RESET: 0</button><button id="poseRecBtn" class="pose-reset" type="button" style="border-color:rgba(255,138,61,.6);display:none">+ ZABT HAREKAT</button><button id="poseStopBtn" class="pose-stop" type="button">STOP</button></div>
@@ -16007,14 +16010,19 @@ var BY_ID={};CATALOG.forEach(function(x){BY_ID[x.id]=x;});window.TRAINING_MOVEME
 function inferMovement(text){var s=String(text||'').toLowerCase();if(/plank|پلانک/.test(s))return'plank';if(/pull[\s_-]*up|barfix|barfiks|بارفیکس|پول آپ/.test(s))return'pullup';if(/sit[\s_-]*up|deraz|دراز نشست|سیت آپ/.test(s))return'situp';if(/squat|اسکات/.test(s))return'squat';if(/push|shena|شنا|پوش/.test(s))return'pushup';if(/bicep|جلو بازو|curl/.test(s))return'fl_bicepCurl';if(/shoulder|سرشانه|press/.test(s))return'fl_shoulderPress';if(/crunch|کرانچ/.test(s))return'fl_crunch';if(/lunge|لانج/.test(s))return'fl_lunge';if(/deadlift|ددلیفت/.test(s))return'fl_deadlift';if(/wall|وال سیت/.test(s))return'fl_wallSit';if(/jack|جامپینگ|پروانه/.test(s))return'fl_jumpingJack';if(/knee|زانو بلند|های نیز/.test(s))return'fl_highKnee';/* custom movements by label */try{var l=JSON.parse(localStorage.getItem('lvl13_custom_moves')||'[]');for(var i=0;i<l.length;i++){if(l[i].label&&s.indexOf(String(l[i].label).toLowerCase())>-1)return l[i].id;}}catch(e){}return'generic';}
 function parseTarget(text,def){var s=String(text||'').toLowerCase(),m;if((m=s.match(/(\d+(?:\.\d+)?)\s*km\b/)))return{type:'km',target:+m[1]};if((m=s.match(/(\d+(?:\.\d+)?)\s*(?:min|minute)/)))return{type:'minutes',target:+m[1]};if((m=s.match(/(\d+(?:\.\d+)?)\s*(?:sec|second|s)\b/)))return{type:'seconds',target:+m[1]};if((m=s.match(/(\d+(?:\.\d+)?)\s*m\b/))&&/sprint|run|dovid/.test(s))return{type:'meters',target:+m[1]};if((def.type==='reps'||def.id==='generic')&&(m=s.match(/(?:—|-|x)\s*(\d+(?:\.\d+)?)/)))return{type:'reps',target:+m[1]};return{type:def.type,target:def.target};}
 function resolveMeta(item){item=item||{};var movement=BY_ID[item.movement]?item.movement:inferMovement(item.text),def=BY_ID[movement]||BY_ID.generic,parsed=parseTarget(item.text,def),type=item.targetType||parsed.type,target=Number(item.target);if(!Number.isFinite(target)||target<0)target=parsed.target;return{movement:movement,name:item.name||String(item.text||def.label).split(/\s+[—-]\s+/)[0].trim()||def.label,targetType:type,target:target,sets:(Number.isFinite(parseInt(item.sets,10))?Math.max(0,parseInt(item.sets,10)):3),rest:Math.max(0,parseInt(item.rest,10)||0),weight:Number(item.weight)||0,family:def.family};}
-function formatItem(meta){var d=BY_ID[meta.movement]||BY_ID.generic,name=String(meta.name||d.label).trim()||d.label,bits=[];if(meta.targetType==='reps')bits.push(meta.target+' rep');else if(meta.targetType==='seconds')bits.push(meta.target+'s');else if(meta.targetType==='minutes')bits.push(meta.target+'min');else if(meta.targetType==='meters')bits.push(meta.target+'m');else if(meta.targetType==='km')bits.push(meta.target+'km');if(meta.weight>0)bits.push(meta.weight+'kg');if(meta.rest>0)bits.push('rest '+meta.rest+'s');return name+(bits.length?' — '+bits.join(' · '):'');}
+function formatItem(meta){var d=BY_ID[meta.movement]||BY_ID.generic,name=String(meta.name||d.label).trim()||d.label,bits=[];if(meta.targetType==='reps')bits.push(meta.target+' rep');else if(meta.targetType==='seconds')bits.push(meta.target+'s');else if(meta.targetType==='minutes')bits.push(meta.target+'min');else if(meta.targetType==='meters')bits.push(meta.target+'m');else if(meta.targetType==='km')bits.push(meta.target+'km');if(meta.weight>0)bits.push(meta.weight+'kg');if(meta.rest>0)bits.push('rest '+meta.rest+'s');/* v2.7 FIX: faghat ESM-E NAMAYESHI. Ghablan target/rest/vazn be
+   esm michasbid ("Push-up — 15 rep · rest 90s") va chon dafe-ye
+   ba'ad hamin matn dobare parse mishod, esm va adad ghati mishodan.
+   Alan adad-ha faghat tu field-haye khodeshoon (item.target /
+   item.rest / item.weight) zakhire mishan — matn dast nakhorde. */
+return name;/*KEEP:*/ /* eslahe-ghadimi: name+(bits.length?' \u2014 '+bits.join(' \u00B7 '):'') */}
 window.trainingInferMovement=inferMovement;window.trainingResolveExerciseMeta=resolveMeta;
 /* One-time, non-destructive metadata migration for legacy {text,sets} exercises. */
 try{if(typeof trainingDays!=='undefined'&&Array.isArray(trainingDays)){var migrated=false;trainingDays.forEach(function(day){(day.items||[]).forEach(function(item){var m=resolveMeta(item);if(!BY_ID[item.movement]){item.movement=m.movement;migrated=true;}if(!item.name){item.name=m.name;migrated=true;}if(!item.targetType){item.targetType=m.targetType;migrated=true;}if(!Number.isFinite(Number(item.target))){item.target=m.target;migrated=true;}if(!Number.isFinite(Number(item.rest))){item.rest=0;migrated=true;}});});if(migrated&&typeof saveTrainingDays==='function')saveTrainingDays();}}catch(migrationError){console.warn('Training metadata migration:',migrationError);}
 
 /* Advanced add/edit form */
 var edModal=document.getElementById('exerciseEditorModal'),edForm=document.getElementById('exerciseEditorForm'),edMove=document.getElementById('exerciseMovement'),edName=document.getElementById('exerciseName'),edType=document.getElementById('exerciseTargetType'),edTarget=document.getElementById('exerciseTarget'),edSets=document.getElementById('exerciseSets'),edRest=document.getElementById('exerciseRest'),edWeight=document.getElementById('exerciseWeight'),editCtx=null,lastMove='pushup';
-(function(){var oNew=document.createElement('option');oNew.value='__new__';oNew.textContent='+ TAMRIN JADID (zabt ba camera)';edMove.appendChild(oNew);CATALOG.forEach(function(x){if(x.id==='generic')return;var o=document.createElement('option');o.value=x.id;o.textContent=(x.family==='custom_rec'?'* ':'')+x.label;edMove.appendChild(o);});})();
+(function(){var oNew=document.createElement('option');oNew.value='__new__';oNew.textContent='+ TAMRIN-E JADID';edMove.appendChild(oNew);CATALOG.forEach(function(x){if(x.id==='generic')return;var o=document.createElement('option');o.value=x.id;o.textContent=(x.family==='custom_rec'?'* ':'')+x.label;edMove.appendChild(o);});})();
 function closeEditor(){edModal.classList.add('hidden');edModal.setAttribute('aria-hidden','true');editCtx=null;}
 function updateTargetDisabled(){edTarget.disabled=edType.value==='none';}
 edMove.addEventListener('change',function(){if(edMove.value==='__new__'){edMove.value=lastMove;if(typeof window.__startRecFromEditor==='function')window.__startRecFromEditor();return;}var d=BY_ID[edMove.value]||BY_ID.generic,old=BY_ID[lastMove];if(!edName.value.trim()||(old&&edName.value.trim()===old.label))edName.value=d.label;edType.value=d.type;edTarget.value=d.target;lastMove=d.id;updateTargetDisabled();updateCustomManage();});edType.addEventListener('change',updateTargetDisabled);
@@ -16242,7 +16250,7 @@ function resizeStage(){if(video.videoWidth&&video.videoHeight){canvas.width=vide
 var perf={ema:33,last:0,minGap:0};function frameLoop(){if(!state.running)return;var now=performance.now();if(video.readyState>=2&&poseTask&&video.currentTime!==state.lastVideoTime&&(now-perf.last)>=perf.minGap){state.lastVideoTime=video.currentTime;perf.last=now;try{var t0=performance.now();var r=poseTask.detectForVideo(video,performance.now());var dt=performance.now()-t0;perf.ema=perf.ema*.9+dt*.1;perf.minGap=perf.ema>55?Math.min(70,perf.ema*.6):0;drawPose(r);processPose(window.__rotPose?window.__rotPose(r):r);}catch(e){console.warn('Pose frame:',e);}}state.raf=requestAnimationFrame(frameLoop);}
 function bytesFromBase64(text){var len=text.length,pad=text.slice(-2)==='=='?2:text.slice(-1)==='='?1:0,out=new Uint8Array(Math.floor(len*3/4)-pad),step=1048576-(1048576%4),off=0;for(var i=0;i<len;i+=step){var bin=atob(text.slice(i,Math.min(len,i+step)));for(var j=0;j<bin.length;j++)out[off++]=bin.charCodeAt(j);}return out;}
 async function decodeEmbedded(id,label){var el=document.getElementById(id);if(!el)throw Error('Offline asset missing: '+id);setLoading(true,label+' dar hale baz shodan...');await new Promise(function(r){setTimeout(r,25);});return bytesFromBase64(el.textContent.trim());}
-async function ensurePoseTask(){if(poseTask)return poseTask;if(poseTaskPromise)return poseTaskPromise;poseTaskPromise=(async function(){var CDN='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';setLoading(true,'MediaPipe dar hale download az internet...');var vision=window.Vision;if(!vision||!vision.PoseLandmarker){vision=await import(CDN+'/+esm');window.Vision=vision;}var fileset=await vision.FilesetResolver.forVisionTasks(CDN+'/wasm');setLoading(true,'Pose model dar hale download...');var POSE_URL='https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';var poseOpts=function(del){return{baseOptions:{modelAssetPath:POSE_URL,delegate:del},runningMode:'VIDEO',numPoses:1,minPoseDetectionConfidence:.3,minPosePresenceConfidence:.3,minTrackingConfidence:.3,outputSegmentationMasks:false};};try{poseTask=await vision.PoseLandmarker.createFromOptions(fileset,poseOpts('GPU'));window.__poseDelegate='GPU';}catch(gpuErr){console.warn('GPU delegate nashod, CPU:',gpuErr);poseTask=await vision.PoseLandmarker.createFromOptions(fileset,poseOpts('CPU'));window.__poseDelegate='CPU';}return poseTask;})().catch(function(e){poseTaskPromise=null;throw e;});return poseTaskPromise;}
+async function ensurePoseTask(){/* v2.7 NO-CAMERA: sistem-e shomaresh bardashte shode. Hich download-i az internet anjam nemishe (MediaPipe + model). */if(!(window.__repCounterOff===false))throw new Error('Rep counter bardashte shode');if(poseTask)return poseTask;if(poseTaskPromise)return poseTaskPromise;poseTaskPromise=(async function(){var CDN='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';setLoading(true,'MediaPipe dar hale download az internet...');var vision=window.Vision;if(!vision||!vision.PoseLandmarker){vision=await import(CDN+'/+esm');window.Vision=vision;}var fileset=await vision.FilesetResolver.forVisionTasks(CDN+'/wasm');setLoading(true,'Pose model dar hale download...');var POSE_URL='https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task';var poseOpts=function(del){return{baseOptions:{modelAssetPath:POSE_URL,delegate:del},runningMode:'VIDEO',numPoses:1,minPoseDetectionConfidence:.3,minPosePresenceConfidence:.3,minTrackingConfidence:.3,outputSegmentationMasks:false};};try{poseTask=await vision.PoseLandmarker.createFromOptions(fileset,poseOpts('GPU'));window.__poseDelegate='GPU';}catch(gpuErr){console.warn('GPU delegate nashod, CPU:',gpuErr);poseTask=await vision.PoseLandmarker.createFromOptions(fileset,poseOpts('CPU'));window.__poseDelegate='CPU';}return poseTask;})().catch(function(e){poseTaskPromise=null;throw e;});return poseTaskPromise;}
 function cameraError(e){if(e&&['NotAllowedError','SecurityError'].includes(e.name))return'Dastresi camera rad shod';if(e&&e.name==='NotFoundError')return'Camera peyda nashod';return'Camera/model error: '+(e?.message||e?.name||e);}
 async function startCamera(){if(state.running||state.starting)return;if(!navigator.mediaDevices?.getUserMedia){setGuide('Browser camera ro support nemikone','bad');return;}var token=++state.startToken;state.starting=true;startBtn.disabled=true;startBtn.textContent='LOADING...';setLoading(true,'Ejaze-ye camera...');try{var stream=await navigator.mediaDevices.getUserMedia({video:(function(){var small=Math.min(screen.width,screen.height)<760||navigator.hardwareConcurrency<=4;return{facingMode:'user',width:{ideal:small?480:640},height:{ideal:small?360:480},frameRate:{ideal:small?24:30,max:30}};})(),audio:false});if(token!==state.startToken){stream.getTracks().forEach(function(t){t.stop();});return;}state.stream=stream;video.srcObject=stream;await video.play();if(token!==state.startToken)return;resizeStage();state.running=true;await ensurePoseTask();if(token!==state.startToken||!state.running)return;setLoading(false);setGuide(startGuide(),'warn');startBtn.textContent='CAMERA FAAL';state.lastVideoTime=-1;sessionStart();state.raf=requestAnimationFrame(frameLoop);}catch(e){if(token!==state.startToken)return;console.error(e);stopCamera(false);setLoading(false);setGuide(cameraError(e),'bad');startBtn.textContent='TRY AGAIN';}finally{if(token===state.startToken){state.starting=false;startBtn.disabled=false;}}}
 function stopCamera(update){try{sessionSummary();}catch(e){}try{window.__recordAttempt=false;var rc=document.getElementById('restCountNum');if(rc)rc.style.display='none';}catch(e){}state.startToken++;state.starting=false;state.running=false;cancelAnimationFrame(state.raf);if(state.stream){state.stream.getTracks().forEach(function(t){try{t.stop();}catch(e){}});state.stream=null;}video.srcObject=null;canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);setLoading(false);startBtn.disabled=false;startBtn.textContent='START CAMERA';if(update!==false)setGuide('Camera stop shod','warn');}
@@ -17037,7 +17045,7 @@ try{if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){wind
     try{if(typeof addStatXP==='function')addStatXP(['Strength'],2);}catch(e){}
     try{if(typeof addCoins==='function')addCoins(4);}catch(e){}
     try{if(typeof logDay==='function')logDay({coins:4});}catch(e){}
-    tost('\u{1F4F7}\u{2705} '+String(lastDraw)+' ta '+curEx.name+' ba camera sabt shod! +2 Strength XP +4 Coin');
+    tost('\u{1F4F7}\u{2705} '+String(lastDraw)+' ta '+curEx.name+' sabt shod! +2 Strength XP +4 Coin');
     sndSeq([523,659,784,1047]);
     lastDraw=null;setCardPending(false);updateGameResult();
   }
@@ -18491,11 +18499,11 @@ ready(function(){
    +'<div style="font-size:34px">'+t.icon+'</div>'
    +'<div style="font-size:19px;font-weight:950;color:#fff;margin:4px 0">'+t.label+'</div>'
    +(t.type==='camera'
-     ?'<div style="color:#86efac;font-weight:800;font-size:12px">Ba CAMERA sabet kon — taghallob nemishe! \uD83D\uDCF7</div><div style="margin-top:8px;font-weight:950;color:#facc15;font-size:15px">Progress: '+prog+'/'+t.target+'</div>'
+     ?'<div style="color:#86efac;font-weight:800;font-size:12px">Rooye sharaf sabt kon — vaghean anjamesh bede! \uD83D\uDCAA</div><div style="margin-top:8px;font-weight:950;color:#facc15;font-size:15px">Progress: '+prog+'/'+t.target+'</div>'
      :'<div style="color:#93c5fd;font-weight:800;font-size:12px;line-height:1.6">'+t.desc+'</div>')
    +'</div>'
    +(t.type==='camera'
-     ?'<button id="punishStartBtn" type="button" style="width:100%;min-height:52px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-weight:950;font-size:16px;border:none;border-radius:14px;cursor:pointer">\uD83D\uDCF7 SHOROU BA CAMERA</button>'
+     ?'<button id="punishStartBtn" type="button" style="width:100%;min-height:52px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-weight:950;font-size:16px;border:none;border-radius:14px;cursor:pointer">✋ ANJAM DADAM — SABT-E DASTI</button>'
      :'<button id="punishHonorBtn" type="button" style="width:100%;min-height:52px;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;font-weight:950;font-size:16px;border:none;border-radius:14px;cursor:pointer">\u2744\uFE0F ANJAM DADAM — GHOL MIDAM!</button>')
    +(locked?'':'<div style="margin-top:10px;color:#64748b;font-size:11px;font-weight:800">Age vaght tamoom she: -'+XP_PENALTY+' XP · -'+COIN_PENALTY+' Coin + GHOFL-E KAMEL \uD83D\uDD12</div>')
    +'</div>';
@@ -22411,7 +22419,7 @@ ready(function(){
     ov.innerHTML='<div class="mn-card">'
       +'<div style="font-size:40px">\uD83D\uDCF5</div>'
       +'<div class="mn-t">'+(opt.title||'Sabt-e dasti')+'</div>'
-      +'<div class="mn-s">'+(opt.sub||'Camera khamoosh ast — adad ro dasti vared kon.')+'</div>'
+      +'<div class="mn-s">'+(opt.sub||'Adad ro dasti vared kon.')+'</div>'
       +'<input class="mn-in" id="mnInput" type="number" inputmode="numeric" min="0" '
         +'value="'+(tgt||'')+'" placeholder="0"/>'
       +'<div class="mn-row">'
@@ -22762,5 +22770,518 @@ ready(function(){
 })();
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3a269524bc0349b',t:'MTc4OTI1MjgwMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+
+<!-- ============================================================
+     RUN + FINISHER HAMISHE DIDE BESHAN  (v2.7)
+     ------------------------------------------------------------
+     MOSHKEL (gozaresh-e karbar): "in tu bakhsh-haye default hast
+     vali age yek tamrin-e jadid bekhay ezafe koni, in-ha nistan
+     va hatta nemishe avord ya pak kard, faghat mishe edit kard."
+
+     ELLAT: tu renderWorkoutModal:
+         if(w.run && w.run.trim()){ ...li.run besaz... }
+         if(w.finisher && w.finisher.trim()){ ...li.finisher... }
+     Yani age khali bashe, element ASLAN SAKHTE NEMISHE -> na
+     dide mishe na mishe click kard -> rah-e bargardundanesh nist.
+
+     RAH-E HAL (additive): baad az har render, age nabood, yek
+     ja-ye khali ("+ Run ezafe kon") mizarim ke click-esh hamun
+     prompt ro baz kone. Va baraye pak kardan: khali gozashtan-e
+     prompt kafie (khod-e code w.run="" mikone) -> pas faghat
+     bayad rah-e DIDAN-esh ro bedim.
+     ============================================================ -->
+<style>
+#workoutList li.rf-ghost{
+  list-style:none;margin:6px 0;padding:9px 12px;border-radius:11px;cursor:pointer;
+  border:1px dashed rgba(148,163,184,.45);background:rgba(30,41,59,.35);
+  color:#94a3b8;font:900 11.5px/1.4 Arial,sans-serif;text-align:center;
+  unicode-bidi:plaintext;
+}
+#workoutList li.rf-ghost:hover{border-color:rgba(34,211,238,.6);color:#67e8f9;background:rgba(8,145,178,.15)}
+#workoutList li.rf-ghost:active{transform:scale(.99)}
+/* dokme-ye pak kardan kenar-e run/finisher-e por */
+.rf-del{
+  cursor:pointer;flex:0 0 auto;align-self:center;
+  margin-inline-start:8px;width:auto;min-width:0;max-width:max-content;
+  border:1px solid rgba(248,113,113,.5);border-radius:6px;
+  background:rgba(69,10,10,.5);color:#fca5a5;
+  font:900 9px/1 Arial,sans-serif;padding:4px 7px;line-height:1;
+  white-space:nowrap;
+}
+/* li.run / li.finisher mitoonan block bashan -> flex-eshoon konim
+   ta dokme kenar-e matn bemoone, na zir-esh va na tamam-arz */
+/* DEGHAT: CSS-e ghadimi `#workoutModal .workout-list>li.run` specificity-e
+   balatari dare va `text-align:center` + display-e block mizare. Pas bayad
+   selector-e ham-vazn ya balatar bedim. */
+#workoutModal .workout-list>li.run,
+#workoutModal .workout-list>li.finisher,
+#workoutList li.run,#workoutList li.finisher{
+  display:flex !important;flex-direction:row !important;
+  align-items:center !important;justify-content:center !important;
+  gap:10px !important;flex-wrap:nowrap !important;
+}
+#workoutModal .workout-list>li.run>.rf-txt,
+#workoutModal .workout-list>li.finisher>.rf-txt{
+  flex:0 1 auto;min-width:0;order:1;
+}
+#workoutModal .workout-list>li.run>.rf-del,
+#workoutModal .workout-list>li.finisher>.rf-del{ order:2; }
+</style>
+<script>
+(function(){
+function ready(fn){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fn);else fn();}
+ready(function(){
+
+  function cur(){
+    try{ return (typeof getTraining==='function' && typeof curWorkoutId!=='undefined')
+      ? getTraining(curWorkoutId) : null; }catch(e){ return null; }
+  }
+  function persist(){
+    try{ if(typeof saveTrainingDays==='function')saveTrainingDays(); }catch(e){}
+    try{ if(typeof renderWorkoutModal==='function')renderWorkoutModal(); }catch(e){}
+    try{ if(typeof renderTraining==='function')renderTraining(); }catch(e){}
+  }
+
+  function ask(field,label,ph){
+    var w=cur(); if(!w)return;
+    var nv=prompt(label+'\n\n(khali bezar + OK = PAK mishe)', w[field]||ph||'');
+    if(nv===null)return;                 /* Cancel */
+    w[field]=String(nv).trim();
+    persist();
+    try{ toast(w[field] ? ('\u2705 '+label+' zakhire shod') : ('\uD83D\uDDD1\uFE0F '+label+' pak shod')); }catch(e){}
+  }
+
+  /* --- ja-ye khali baraye run/finisher-e nabood + dokme-ye pak --- */
+  function decorate(){
+    var modal=document.getElementById('workoutModal');
+    if(!modal || modal.classList.contains('hidden'))return;
+    var list=document.getElementById('workoutList');
+    if(!list)return;
+    var w=cur(); if(!w)return;
+
+    var hasRun=!!list.querySelector('li.run');
+    var hasFin=!!list.querySelector('li.finisher');
+
+    /* 1) RUN nabood -> ghost bala */
+    if(!hasRun && !list.querySelector('li.rf-ghost[data-rf="run"]')){
+      var g=document.createElement('li');
+      g.className='rf-ghost'; g.setAttribute('data-rf','run');
+      g.textContent='\uD83C\uDFC3 + Run / Garm kardan ezafe kon';
+      g.addEventListener('click',function(){ ask('run','Run / Garm kardan','\uD83C\uDFC3 10min'); });
+      list.insertBefore(g, list.firstChild);
+    }
+
+    /* 2) FINISHER nabood -> ghost pain */
+    if(!hasFin && !list.querySelector('li.rf-ghost[data-rf="fin"]')){
+      var g2=document.createElement('li');
+      g2.className='rf-ghost'; g2.setAttribute('data-rf','fin');
+      g2.textContent='\uD83D\uDD25 + Finisher ezafe kon';
+      g2.addEventListener('click',function(){ ask('finisher','Finisher','\uD83E\uDDD8 Keshesh 10min'); });
+      list.appendChild(g2);
+    }
+
+    /* 3) dokme-ye PAK rooye run/finisher-e mojood */
+    [['li.run','run','Run'],['li.finisher','finisher','Finisher']].forEach(function(t){
+      var el=list.querySelector(t[0]);
+      if(!el || el.querySelector('.rf-del'))return;
+      /* matn-e lokht (text node) ro bebar tu span ta flex un ro
+         kesh nade va dokme kenaresh besheene */
+      try{
+        var has=el.querySelector('.rf-txt');
+        if(!has){
+          var sp=document.createElement('span');
+          sp.className='rf-txt';
+          while(el.firstChild)sp.appendChild(el.firstChild);
+          el.appendChild(sp);
+        }
+      }catch(e2){}
+      var d=document.createElement('button');
+      d.type='button'; d.className='rf-del'; d.textContent='\u2715 pak';
+      d.addEventListener('click',function(e){
+        e.preventDefault(); e.stopPropagation();
+        var w2=cur(); if(!w2)return;
+        if(!confirm(t[2]+' pak beshe?'))return;
+        w2[t[1]]='';
+        persist();
+        try{ toast('\uD83D\uDDD1\uFE0F '+t[2]+' pak shod'); }catch(e2){}
+      });
+      el.appendChild(d);
+    });
+  }
+
+  /* har bar ke modal render mishe, dobare bezar */
+  setInterval(decorate,400);
+
+});
+})();
+</script>
+
+
+<!-- ============================================================
+     EXERCISE EDITOR FIX + RESET-E BARNAME  (v2.7)
+     ------------------------------------------------------------
+     MOSHKEL-E 1 (gozaresh-e karbar):
+       "meghdar-e target ba esm-e namayeshi fargh mikone"
+       "esm-e namayeshi ba target va rest ghati mishe, kharab mishe"
+
+     ELLAT (peyda shod ba khoondan-e resolveMeta + formatItem):
+       item.text = formatItem(meta) = "Push-up — 10 rep · rest 60s"
+       Baad vaghti dobare editor baz mishe, resolveMeta() in kar ro mikone:
+           name = item.name || item.text.split(/\s+[—-]\s+/)[0]
+           parsed = parseTarget(item.text, def)
+       Ta vaghti item.name hast moshkeli nist. VALI:
+         - Barname-haye DEFAULT (mesle SYSTEM PROTOCOL) `name` nadaran,
+           faghat `text` daran -> esm az text joda mishe.
+         - Esm-haye man mesle "One-Arm DB Row — 12 (3s pain)" KHODESHOON
+           "—" daran! Pas split rooye "—" esm ro nesfe mikone va
+           parseTarget adad-e eshtebah (12) ro az esm barmidare.
+         - "Deficit Push-up — 15" -> target 15 mishe vali sets 4 ast.
+         - "Weighted Pull-up — Max reps" adad nadare -> target-e default.
+
+     RAH-E HAL (additive):
+       a) `name` ro SARIH tu hameye item-haye default gozashtim (pain).
+       b) resolveMeta wrap mishe: age item.name khali bood, esm ro az
+          text darbiarim AMMA faghat vaghti motmaen bashim un " — " ro
+          khod-e formatItem gozashte (yani bakhsh-e dovom ba adad+vahed
+          shoroo beshe). Vagarna KOLL-E text = esm.
+       c) formatItem wrap mishe: az " · " baraye joda kardan estefade
+          mikone ke ba "—"-e dakhel-e esm ghati nashe... vali chon
+          nemikhaim zaher avaz she, bejash item.name ro HAMISHE
+          minevisim (ke alan mishe) va resolveMeta be un etemad mikone.
+
+     MOSHKEL-E 2: dokme baraye bargardundan-e barname-ye SYSTEM PROTOCOL.
+     ============================================================ -->
+<style>
+#restoreProgBtn{
+  display:block;width:100%;margin:10px 0 4px;min-height:44px;cursor:pointer;
+  border:1px solid rgba(56,189,248,.45);border-radius:12px;
+  background:linear-gradient(135deg,rgba(14,165,233,.18),rgba(37,99,235,.12));
+  color:#bae6fd;font:900 12px/1.4 Arial,sans-serif;padding:10px;
+  unicode-bidi:plaintext;
+}
+#restoreProgBtn:active{transform:scale(.99)}
+</style>
+<script>
+(function(){
+function ready(fn){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fn);else fn();}
+ready(function(){
+
+  /* ============ 1) ESM / TARGET / REST GHATI NASHAN ============ */
+  (function(){
+    if(typeof window.trainingResolveExerciseMeta!=='function')return;
+    var orig=window.trainingResolveExerciseMeta;
+    if(orig.__nameFix)return;
+
+    /* Faghat in shekl-ha ro "dom-e formatItem" hesab mikonim:
+         "<esm> — 10 rep"   "<esm> — 30s"   "<esm> — 5min"
+         "<esm> — 100m"     "<esm> — 2km"   "... · rest 60s"  "... · 20kg"
+       Har "—"-e digei (mesl-e "One-Arm DB Row — 12 (3s pain)")
+       joz-e ESM hesab mishe. */
+    var TAIL=/\s+—\s+(\d+(?:\.\d+)?)\s*(rep|s|min|m|km)(\s*·.*)?$/;
+
+    function splitName(text){
+      var t=String(text||'').trim();
+      var m=t.match(TAIL);
+      if(m)return t.slice(0,t.length-m[0].length).trim();
+      return t;                       /* dast nazan — koll-esh esm-e */
+    }
+
+    var g=function(item){
+      var r=orig.apply(this,arguments);
+      try{
+        item=item||{};
+        /* age esm-e sarih dashte bashim, HAMUN mo'tabar ast */
+        if(item.name && String(item.name).trim()){
+          r.name=String(item.name).trim();
+        }else if(item.text){
+          r.name=splitName(item.text)||r.name;
+        }
+        /* target: age item.target-e sarih hast, oon harf-e akhar-o mizane.
+           (resolveMeta-ye asli ham hamin kar ro mikone, vali vaghti
+           item.target nabood az parseTarget-e text mikhoone ke rooye
+           esm-haye dar-dar eshtebah mishe. Pas age esm "—" dashte
+           bashe va target-e sarih nabashe, be default-e harekat
+           barmigardim, na be adad-e tu esm.) */
+        var hasT=Number.isFinite(Number(item.target))&&Number(item.target)>=0
+                 &&item.target!==''&&item.target!==null;
+        if(!hasT && item.text && !TAIL.test(String(item.text))){
+          var d=(window.TRAINING_MOVEMENT_CATALOG||[]).filter(function(x){
+            return x.id===r.movement;})[0];
+          if(d){ r.targetType=d.type; r.target=d.target; }
+        }
+      }catch(e){}
+      return r;
+    };
+    g.__nameFix=true;
+    window.trainingResolveExerciseMeta=g;
+    try{ if(typeof resolveMeta==='function')resolveMeta=g; }catch(e){}
+  })();
+
+  /* ============ 2) DOKME-YE BARGARDUNDAN-E BARNAME ============ */
+  function addRestoreBtn(){
+    if(document.getElementById('restoreProgBtn'))return;
+    var host=document.getElementById('trainingAddForm');
+    if(!host||!host.parentNode)return;
+    var b=document.createElement('button');
+    b.id='restoreProgBtn'; b.type='button';
+    b.innerHTML='\u2694\uFE0F Bargardundan be SYSTEM PROTOCOL (7 rooz)';
+    b.title='Barname-ye pish-farz ro barmigardune';
+    b.addEventListener('click',function(){
+      if(typeof DEFAULT_TRAINING==='undefined'){
+        try{toast('\u26A0\uFE0F Barname-ye pish-farz peyda nashod');}catch(e){}
+        return;
+      }
+      if(!confirm('\u2694\uFE0F SYSTEM PROTOCOL bargarde?\n\n'
+        +'\u2022 Hameye tamrin-haye fe\'li PAK mishan\n'
+        +'\u2022 7 rooz-e barname-ye asli barmigardan\n'
+        +'\u2022 Tik-haye emrooz ham pak mishan\n\n'
+        +'XP, Level, streak va baghi-ye barname DAST NEMIKHORAN.'))return;
+      try{
+        trainingDays=JSON.parse(JSON.stringify(DEFAULT_TRAINING));
+        if(typeof saveTrainingDays==='function')saveTrainingDays();
+        /* tik-haye tamrin ham pak beshan (chon id-ha avaz shodan) */
+        try{ trainingTicks={}; if(typeof saveTrainingTicks==='function')saveTrainingTicks(); }catch(e){}
+        try{ trainingState={}; if(typeof save==='function'&&typeof KEYS!=='undefined')save(KEYS.training,trainingState); }catch(e){}
+        if(typeof renderTraining==='function')renderTraining();
+        if(typeof renderTrainingDaySelect==='function')renderTrainingDaySelect();
+        if(typeof updateHomePage==='function')updateHomePage();
+        toast('\u2694\uFE0F SYSTEM PROTOCOL bargasht! 7 rooz amade-ast');
+      }catch(e){
+        try{toast('\u26A0\uFE0F Moshkel: '+e.message);}catch(e2){}
+      }
+    });
+    host.parentNode.insertBefore(b, host.nextSibling);
+  }
+  addRestoreBtn();
+  setTimeout(addRestoreBtn,700);
+  setInterval(addRestoreBtn,2500);
+
+});
+})();
+</script>
+
+
+<!-- ============================================================
+     TARGET CHIP  (v2.7)
+     ------------------------------------------------------------
+     MOSHKEL (gozaresh-e karbar): "hanooz nazade chand ta bayad
+     beram — bayad hatman beram tu safhe-ye edit-e harekat va
+     save-esh konam ta biad, dar halat-e adi nist."
+
+     ELLAT: ghablan target be ESM michasbid ("Push-up — 15 rep").
+     Karbar khast esm tamiz bashe -> formatItem faghat `name`
+     barmigardune. Natije: target hich ja dide nemishe.
+
+     RAH-E HAL (additive): yek "chip"-e jodagane kenar-e "Set:"
+     mizarim ke az item.target / item.targetType / item.rest /
+     item.weight khoonde mishe. Esm dast nemikhore.
+       "15 rep"  "60s"  "10min"  "100m"  "2km"  "20kg"  "rest 90s"
+     Ba click rooyesh, hamun editor baz mishe.
+     ============================================================ -->
+<style>
+.tgt-chips{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-inline-start:6px}
+.tgt-chip{
+  display:inline-flex;align-items:center;gap:3px;cursor:pointer;
+  padding:3px 8px;border-radius:7px;white-space:nowrap;
+  font:900 10.5px/1 Arial,sans-serif;unicode-bidi:plaintext;
+  border:1px solid rgba(34,211,238,.45);
+  background:rgba(8,145,178,.16);color:#67e8f9;
+}
+.tgt-chip.rest{border-color:rgba(148,163,184,.4);background:rgba(100,116,139,.16);color:#cbd5e1}
+.tgt-chip.kg{border-color:rgba(250,204,21,.45);background:rgba(202,138,4,.16);color:#fde047}
+.tgt-chip:hover{filter:brightness(1.25)}
+.tgt-chip:active{transform:scale(.96)}
+</style>
+<script>
+(function(){
+function ready(fn){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fn);else fn();}
+ready(function(){
+
+  function label(it){
+    /* FIX: baazi item-haye ghadimi (zakhire-shode tu localStorage)
+       field-e target/targetType NADARAN va faghat text daran
+       (mesl-e "Pistol Squat — 6-10 har pa"). Baraye un-ha az
+       resolveMeta estefade mikonim ta adad az matn darbiad. */
+    var t=Number(it.target)||0, ty=it.targetType||'', out=[];
+    if(!t||!ty||ty==='none'){
+      /* DEGHAT: be parseTarget-e barname etemad NEMIKONIM chon rooye
+         esm-haye dar-dar ("Pistol Squat — 6-10 har pa") adad-e ghalat
+         barmigardune va khune-ha jabeja mishan. Khodemun az AKHAR-E
+         matn (baad az akharin "—") adad ro darmiarim. */
+      var txt=String(it.text||''), mm=null;
+      var tail=txt.split('\u2014').pop();          /* baad az akharin — */
+      if(tail===txt) tail=txt;
+      if((mm=tail.match(/(\d+(?:\.\d+)?)\s*(?:min|daghighe)/i))){ t=+mm[1]; ty='minutes'; }
+      else if((mm=tail.match(/(\d+(?:\.\d+)?)\s*(?:sec|saniye|s)\b/i))){ t=+mm[1]; ty='seconds'; }
+      else if((mm=tail.match(/(\d+(?:\.\d+)?)\s*km\b/i))){ t=+mm[1]; ty='km'; }
+      else if((mm=tail.match(/(\d+(?:\.\d+)?)\s*(?:metr|m)\b/i))){ t=+mm[1]; ty='meters'; }
+      else if((mm=tail.match(/(\d+(?:\.\d+)?)\s*[-\u2013]\s*(\d+(?:\.\d+)?)/))){
+        /* bazee "6-10" -> adad-e bala */ t=+mm[2]; ty='reps';
+      }
+      else if((mm=tail.match(/(\d+(?:\.\d+)?)/))){ t=+mm[1]; ty='reps'; }
+    }
+    if(ty==='reps'    && t>0) out.push([t+' rep','']);
+    else if(ty==='seconds' && t>0) out.push([t+'s','']);
+    else if(ty==='minutes' && t>0) out.push([t+'min','']);
+    else if(ty==='meters'  && t>0) out.push([t+'m','']);
+    else if(ty==='km'      && t>0) out.push([t+'km','']);
+    var wt=Number(it.weight)||0;
+    if(wt>0) out.push([wt+'kg','kg']);
+    var r=parseInt(it.rest,10)||0;
+    if(r>0) out.push(['rest '+r+'s','rest']);
+    return out;
+  }
+
+  function paint(){
+    var modal=document.getElementById('workoutModal');
+    if(!modal || modal.classList.contains('hidden'))return;
+    if(typeof curWorkoutId==='undefined' || typeof getTraining!=='function')return;
+    var w=getTraining(curWorkoutId); if(!w)return;
+    var list=document.getElementById('workoutList'); if(!list)return;
+
+    /* har <li>-ye harekat yek .sets-control dare; be tartib-e
+       item-ha peyda-shoon mikonim (li.run / li.finisher nadaran) */
+    var rows=list.querySelectorAll('li');
+    var ex=-1;
+    rows.forEach(function(li){
+      if(li.classList.contains('run')||li.classList.contains('finisher')
+         ||li.classList.contains('rf-ghost'))return;
+      var sc=li.querySelector('.sets-control');
+      if(!sc)return;
+      ex++;
+      var it=(w.items||[])[ex];
+      if(!it)return;
+
+      var bits=label(it);
+      var sig=JSON.stringify(bits);
+      var box=sc.querySelector('.tgt-chips');
+
+      if(!bits.length){ if(box)box.remove(); return; }
+      if(box && box.getAttribute('data-sig')===sig)return;   /* taghir nakarde */
+      if(box)box.remove();
+
+      box=document.createElement('span');
+      box.className='tgt-chips';
+      box.setAttribute('data-sig',sig);
+      var myIdx=ex;
+      bits.forEach(function(pair){
+        var c=document.createElement('span');
+        c.className='tgt-chip'+(pair[1]?' '+pair[1]:'');
+        c.textContent=pair[0];
+        c.title='Click: virayesh-e target / rest / vazn';
+        c.addEventListener('click',function(e){
+          e.preventDefault(); e.stopPropagation();
+          try{
+            if(typeof window.openTrainingExerciseEditor==='function')
+              window.openTrainingExerciseEditor(curWorkoutId,myIdx,(getTraining(curWorkoutId).items||[])[myIdx]);
+          }catch(e2){}
+        });
+        box.appendChild(c);
+      });
+      sc.appendChild(box);
+    });
+  }
+
+  setInterval(paint,400);
+
+});
+})();
+</script>
+
+
+<!-- ============================================================
+     NO REP COUNTER  (v2.7) — hamechi DASTI
+     ------------------------------------------------------------
+     Khaste-ye karbar: "kollan sistem-e shomaresh-e harekat ro pak
+     kon bardar, hamechi dasti bashe, dige Rep Counter vojood
+     nadashte bashe."
+
+     ROSH (kamelan ADDITIVE — hich code-e ghadimi hazf nashode):
+       Hamun mekanizm-e "CAMERA OFF MODE" ro be halat-e DAEMI
+       mibarim:
+         1) kelid `lvl13_cam_off_v1` be ejbar '1' mimoone
+            (dokme-ye khamoosh/roshan ham bardashte mishe).
+         2) hameye darvaze-haye camera (openFreeCounter /
+            openWorkoutCameraCounter / openCardCameraChallenge /
+            startRecordAttempt) -> panel-e DASTI.
+         3) getUserMedia baste.
+         4) safhe-ye "Records" (ke faghat baraye rep counter bood)
+            az menu bardashte mishe.
+         5) modal-e #poseCounterModal hargez baz nemishe.
+
+     BARGARDUNDAN: age ye rooz khasti camera bargarde, kafie tu
+     console bezani:  localStorage.setItem('lvl13_rep_off_v1','0')
+     va safhe ro refresh koni.
+     ============================================================ -->
+<style>
+/* dokme-ye camera-ye tanzimat dige mani nadare */
+#camOffBtn{display:none !important}
+/* menu-card-e Records (faghat baraye rep counter bood) */
+body.rep-off .menu-card[data-page="pageRecords"]{display:none !important}
+/* har dokme-ye camera-ee ke ja moonde bashe */
+body.rep-off .item-camera,
+body.rep-off #workoutCameraBtn,
+body.rep-off .rh-start,
+body.rep-off #poseCounterModal,
+/* satr-e entekhab-e harekat tu editor: faghat baraye camera bood */
+body.rep-off #exerciseMovement,
+body.rep-off #customMoveManage,
+/* dokme-haye "zabt-e harekat-e jadid ba camera" */
+body.rep-off #poseMovementSelect,
+body.rep-off #poseModeRow,
+body.rep-off #poseGoalRow{display:none !important}
+/* label-e bala-ye select-e harekat ham bere */
+body.rep-off #exMoveField{display:none !important}
+</style>
+<script>
+(function(){
+function ready(fn){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fn);else fn();}
+ready(function(){
+
+  var RKEY='lvl13_rep_off_v1';     /* '0' = camera bargarde (rah-e farar) */
+  function repOff(){
+    try{ return localStorage.getItem(RKEY)!=='0'; }catch(e){ return true; }
+  }
+  if(!repOff())return;             /* karbar amdan bargardoonde */
+
+  /* 1) CAMERA OFF ro DAEMI kon — block-e "CAMERA OFF MODE v1"
+        hameye darvaze-ha ro az rooye hamin kelid mibande. */
+  function lock(){
+    try{ if(localStorage.getItem('lvl13_cam_off_v1')!=='1')
+      localStorage.setItem('lvl13_cam_off_v1','1'); }catch(e){}
+    try{ document.body.classList.add('rep-off','cam-off-mode'); }catch(e){}
+  }
+  lock();
+  setInterval(lock,1500);
+
+  /* 2) modal-e rep counter hargez baz namoone (sangar-e ezafi) */
+  setInterval(function(){
+    try{
+      var m=document.getElementById('poseCounterModal');
+      if(m && !m.classList.contains('hidden')){
+        m.classList.add('hidden');
+        m.setAttribute('aria-hidden','true');
+      }
+    }catch(e){}
+  },400);
+
+  /* 3) safhe-ye Records az menu bere; age bazam bazesh kard,
+        bargard be Home */
+  setInterval(function(){
+    try{
+      var p=document.getElementById('pageRecords');
+      if(p && p.classList.contains('active') && typeof showPage==='function'){
+        showPage('pageHome');
+        try{ toast('\uD83D\uDCF5 Rep Counter bardashte shode \u2014 hamechi dasti'); }catch(e){}
+      }
+    }catch(e){}
+  },600);
+
+  window.__repCounterOff=true;
+
+});
+})();
+</script>
+
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3a30142f96f2d96',t:'MTc4OTI1OTAyMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
