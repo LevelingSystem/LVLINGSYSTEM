@@ -1,6 +1,91 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
+<script>
+/* ============================================================
+   CF GUARD v1 — zed-e script-e bot-check-e Cloudflare
+   ------------------------------------------------------------
+   MOSHKEL: har bar ke in file az internet DOWNLOAD mishe,
+   Cloudflare momkene ye script-e bot-check behesh bechasboone.
+   Un script ye iframe-e makhfi misaze va donbal-e
+   /cdn-cgi/challenge-platform/scripts/jsd/main.js migarde ke
+   rooye file:// vojood nadare -> 5 ta error tu console.
+
+   In block AVVAL-E HAME ejra mishe va jelosh ro migire, pas
+   mohem nist chand bar file download beshe — hamishe tamiz-e.
+   Hich chiz-e digei ro dast nemizane.
+   ============================================================ */
+(function(){
+  try{
+    var BAD=/cdn-cgi|challenge-platform|__CF/i;
+
+    /* 1) har <script src="...cdn-cgi..."> ke sakhte she, khonsa mishe */
+    var realCreate=Document.prototype.createElement;
+    Document.prototype.createElement=function(tag){
+      var el=realCreate.apply(this,arguments);
+      try{
+        if(String(tag).toLowerCase()==='script'){
+          var d=Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype,'src');
+          if(d&&d.set){
+            Object.defineProperty(el,'src',{
+              configurable:true,
+              get:function(){ return d.get.call(el); },
+              set:function(v){
+                if(BAD.test(String(v||''))){
+                  console.debug('[CF GUARD] script block shod:',String(v).slice(0,60));
+                  return;                      /* set nakon */
+                }
+                d.set.call(el,v);
+              }
+            });
+          }
+        }
+      }catch(e){}
+      return el;
+    };
+
+    /* 2) fetch / XHR-e cdn-cgi ham rad beshan */
+    if(window.fetch){
+      var rf=window.fetch;
+      window.fetch=function(u){
+        try{ if(BAD.test(String((u&&u.url)||u||'')))
+          return Promise.reject(new Error('blocked')); }catch(e){}
+        return rf.apply(this,arguments);
+      };
+    }
+    if(window.XMLHttpRequest){
+      var ro=XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open=function(m,u){
+        try{ if(BAD.test(String(u||''))){ this.__cfBlocked=true; } }catch(e){}
+        return ro.apply(this,arguments);
+      };
+      var rs=XMLHttpRequest.prototype.send;
+      XMLHttpRequest.prototype.send=function(){
+        if(this.__cfBlocked)return;            /* bi-sar-o-seda rad kon */
+        return rs.apply(this,arguments);
+      };
+    }
+
+    /* 3) iframe-e makhfi-ye 1x1 ke un script misaze -> pak kon */
+    function sweep(){
+      try{
+        document.querySelectorAll('iframe').forEach(function(f){
+          var s=f.getAttribute('style')||'';
+          var w=f.getAttribute('width'), h=f.getAttribute('height');
+          if((w==='1'&&h==='1')||/visibility:\s*hidden/i.test(s)){
+            if(!f.src||f.src==='about:blank')f.remove();
+          }
+        });
+      }catch(e){}
+    }
+    if(document.readyState==='loading')
+      document.addEventListener('DOMContentLoaded',function(){sweep();setTimeout(sweep,600);});
+    else { sweep(); setTimeout(sweep,600); }
+    setTimeout(sweep,2000);
+  }catch(e){}
+})();
+</script>
+
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <style id="bootHide">html,body{visibility:hidden!important}html{background:#020504!important}</style>
@@ -2752,7 +2837,7 @@ const DAY_NAMES=["","Yekshanbe","Doshanbe","Seshanbe","Chaharshanbe","Panjshanbe
 /* BARNAME-YE GHADIMI (SYSTEM PROTOCOL jaygozin shod) — hazf nashode:
 const DEFAULT_TRAINING=[{id:"tr1",label:"Bala-tane",day:1,xp:3,stats:["Strength"],sub:"",run:"🏃 10-15min",finisher:"1min push-up",items:[{text:"Push-up",sets:6},{text:"Pull-up",sets:5},{text:"TRX row",sets:4},{text:"Dips",sets:4},{text:"Plank — 60s",sets:3}]},{id:"tr2",label:"Sorat",day:2,xp:3,stats:["Speed","Agility"],sub:"",run:"Sprint",finisher:"",items:[{text:"Sprint — 30m",sets:10},{text:"High knees — 40s",sets:5},{text:"Mountain climber — 45s",sets:4},{text:"Jump rope — 1min",sets:5}]},{id:"tr3",label:"Pa",day:3,xp:3,stats:["Strength","Balance"],sub:"",run:"🏃 10min",finisher:"",items:[{text:"Squat — 15",sets:4},{text:"Jump squat — 10",sets:5},{text:"Lunge — 12",sets:4},{text:"Wall sit — 90s",sets:3}]},{id:"tr4",label:"Recovery",day:4,xp:3,stats:["Flexibility"],sub:"",run:"🏃 20min aram",finisher:"",items:[{text:"Keshesh — 20min",sets:1},{text:"1 pa — 60s",sets:3}]},{id:"tr5",label:"Full Body",day:5,xp:4,stats:["Strength","Endurance"],sub:"",run:"🏃 5-10min",finisher:"",items:[{text:"Push-up",sets:4},{text:"Squat — 20",sets:4},{text:"Pull-up",sets:4},{text:"Burpee — 12",sets:4},{text:"Plank — 90s",sets:4}]},{id:"tr6",label:"Estegamat",day:6,xp:3,stats:["Endurance","Speed"],sub:"",run:"🏃 1.5km",finisher:"",items:[{text:"Dovidan — 1.5km",sets:1},{text:"Sprint — 200m",sets:6},{text:"Mountain climber — 60s",sets:3}]},{id:"tr7",label:"Esterahat",day:7,xp:1,stats:["Personality"],sub:"",run:"",finisher:"",items:[{text:"Esterahat — 1 rooz",sets:0}]}];
 */
-const DEFAULT_TRAINING=[{"id":"sp_d1","label":"🔴 ROOZ 1: Upper Body Strength & Mass + Sa'ed","day":7,"xp":5,"stats":["Strength","Mind Muscle"],"sub":"Stat Focus: Strength, Mind-Muscle, Muscle Mass","run":"🏃 Garm kardan 10-15min","finisher":"🔥 Forearm Finisher: Hammer Curls 3x15 · Wrist Curls 3x20","items":[{"text":"Weighted Pull-ups (Barefiks ba vazne) — Max Reps","name":"Weighted Pull-ups (Barefiks ba vazne) — Max Reps","sets":4,"target":0,"targetType":"none","rest":60,"movement":"generic"},{"text":"Deficit Push-ups (Shena dast roo dumbell)","name":"Deficit Push-ups (Shena dast roo dumbell)","sets":4,"target":15,"targetType":"reps","rest":60,"movement":"generic"},{"text":"One-Arm Dumbbell Row (3 sekond pain amadan)","name":"One-Arm Dumbbell Row (3 sekond pain amadan)","sets":4,"target":12,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Negative Push-ups (3 sekond makse pain) — Max Reps","name":"Negative Push-ups (3 sekond makse pain) — Max Reps","sets":4,"target":0,"targetType":"none","rest":60,"movement":"generic"},{"text":"Dumbbell / Heavy Ball Overhead Press","name":"Dumbbell / Heavy Ball Overhead Press","sets":4,"target":15,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Pakage Kashesh","name":"Pakage Kashesh","sets":1,"target":10,"targetType":"minutes","rest":60,"movement":"generic"}]},{"id":"sp_d2","label":"🟡 ROOZ 2: Leg Power, Balance & Agility","day":1,"xp":5,"stats":["Strength","Balance","Agility"],"sub":"Stat Focus: Balance, Agility, Leg Power","run":"🏃 Garm kardan 10min","finisher":"","items":[{"text":"Pistol Squats (Squat tek pa) — har pa","name":"Pistol Squats (Squat tek pa) — har pa","sets":4,"target":8,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Goblet Squats (Squat amigh ba Dumbbell)","name":"Goblet Squats (Squat amigh ba Dumbbell)","sets":4,"target":15,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Walking Lunges ba Dumbbell — Gham","name":"Walking Lunges ba Dumbbell — Gham","sets":4,"target":20,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Single-Leg RDL (Deadlift tek pa) — har pa","name":"Single-Leg RDL (Deadlift tek pa) — har pa","sets":3,"target":12,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Single-Leg Calf Raises (Saq pa tek pa)","name":"Single-Leg Calf Raises (Saq pa tek pa)","sets":5,"target":20,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Pakage Kashesh","name":"Pakage Kashesh","sets":1,"target":10,"targetType":"minutes","rest":60,"movement":"generic"}]},{"id":"sp_d3","label":"🔵 ROOZ 3: Speed, Reaction, Vision & Plyometrics","day":2,"xp":5,"stats":["Speed","Reaction","Vision","Agility"],"sub":"Stat Focus: Speed, Reaction, Vision, Explosive Power","run":"🏃 Garm kardan 10min","finisher":"","items":[{"text":"Clap Push-ups (Shena enfejari ba dast zadan)","name":"Clap Push-ups (Shena enfejari ba dast zadan)","sets":4,"target":10,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Jump Squats (Squat enfejari)","name":"Jump Squats (Squat enfejari)","sets":4,"target":12,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Wall Ball Reaction Drill (bedoone tavaghof)","name":"Wall Ball Reaction Drill (bedoone tavaghof)","sets":1,"target":10,"targetType":"minutes","rest":60,"movement":"generic"},{"text":"Eye Tracking (faghat ba mardomak donbal kon)","name":"Eye Tracking (faghat ba mardomak donbal kon)","sets":1,"target":3,"targetType":"minutes","rest":60,"movement":"generic"},{"text":"Sprint Intervals — 30s sprint / 30s rah raftan","name":"Sprint Intervals — 30s sprint / 30s rah raftan","sets":8,"target":30,"targetType":"seconds","rest":60,"movement":"generic"},{"text":"Pakage Kashesh","name":"Pakage Kashesh","sets":1,"target":10,"targetType":"minutes","rest":60,"movement":"generic"}]},{"id":"sp_d4","label":"🟢 ROOZ 4: Upper Hypertrophy, Grip & Sa'ed","day":3,"xp":5,"stats":["Strength","Mind Muscle","Endurance"],"sub":"Stat Focus: Mind-Muscle, Grip Strength, Hypertrophy","run":"🏃 Garm kardan 10min","finisher":"🔥 Forearm Finisher: Pinch Grip 3 Set x Max Time","items":[{"text":"Chin-ups (dast jam baraks, 3s kontrolli) — Max Reps","name":"Chin-ups (dast jam baraks, 3s kontrolli) — Max Reps","sets":4,"target":0,"targetType":"none","rest":60,"movement":"generic"},{"text":"Archer Push-ups (5 ta har taraf)","name":"Archer Push-ups (5 ta har taraf)","sets":4,"target":10,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Heavy Ball Slams (ba tamame ghodrat)","name":"Heavy Ball Slams (ba tamame ghodrat)","sets":4,"target":15,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Chair Dips (ba dumbell roo pa)","name":"Chair Dips (ba dumbell roo pa)","sets":4,"target":15,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Towel Dead Hang (avizan ba hole) — Max Time","name":"Towel Dead Hang (avizan ba hole) — Max Time","sets":4,"target":0,"targetType":"none","rest":60,"movement":"generic"},{"text":"Pakage Kashesh","name":"Pakage Kashesh","sets":1,"target":10,"targetType":"minutes","rest":60,"movement":"generic"}]},{"id":"sp_d5","label":"🟣 ROOZ 5: Core Hardening, Endurance & Mindset","day":4,"xp":5,"stats":["Endurance","Balance","Personality"],"sub":"Stat Focus: Core Strength, Endurance, Mindset / Personality","run":"🏃 Garm kardan 10min","finisher":"💀 Burpees (Tamrine Marg): 100 Ta dar kamtarin zaman","items":[{"text":"L-Sit (pa-ha afoghi) — Max Time","name":"L-Sit (pa-ha afoghi) — Max Time","sets":4,"target":0,"targetType":"none","rest":60,"movement":"generic"},{"text":"Hanging Leg Raises (pa bala az barefiks)","name":"Hanging Leg Raises (pa bala az barefiks)","sets":4,"target":15,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Russian Twists ba Toope sangin","name":"Russian Twists ba Toope sangin","sets":4,"target":30,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Glute Bridge / Back Extension","name":"Glute Bridge / Back Extension","sets":4,"target":20,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Pakage Kashesh","name":"Pakage Kashesh","sets":1,"target":10,"targetType":"minutes","rest":60,"movement":"generic"}]},{"id":"sp_d6","label":"🟠 ROOZ 6: Full Body Power, Agility & Sa'ed","day":5,"xp":5,"stats":["Strength","Agility","Endurance"],"sub":"Stat Focus: Agility, Grip, Full Body Power","run":"🏃 Garm kardan 10min","finisher":"🔥 Forearm Finisher: Hammer Curls 3x15 · Wrist Curls 3x20","items":[{"text":"MODARE MARG: 10 Barefiks + 20 Shena + 30 Squat = 1 Door","name":"MODARE MARG: 10 Barefiks + 20 Shena + 30 Squat = 1 Door","sets":4,"target":0,"targetType":"none","rest":60,"movement":"generic"},{"text":"Farmer's Walk (sangintarin dumbell-ha)","name":"Farmer's Walk (sangintarin dumbell-ha)","sets":4,"target":60,"targetType":"seconds","rest":60,"movement":"generic"},{"text":"Shuttle Run — 5 metr, 10 bar","name":"Shuttle Run — 5 metr, 10 bar","sets":4,"target":10,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Pakage Kashesh","name":"Pakage Kashesh","sets":1,"target":10,"targetType":"minutes","rest":60,"movement":"generic"}]},{"id":"sp_d7","label":"⚪ ROOZ 7: Active Recovery, Vision, Mind & Flexibility","day":6,"xp":5,"stats":["Flexibility","Intelligence","Vision","Personality"],"sub":"Stat Focus: Flexibility, Intelligence, Mind-Muscle, Recovery","run":"🚶 Rah raftan-e aram 20min","finisher":"🥶 Cold Shower: 3 ta 5 daghighe zir ab-e kamelan sard","items":[{"text":"Pakage Kashesh (tamrinat kamel kasheshe badan)","name":"Pakage Kashesh (tamrinat kamel kasheshe badan)","sets":1,"target":45,"targetType":"minutes","rest":60,"movement":"generic"},{"text":"Wim Hof / Box Breathing — 4s dam/habs/bazdam/habs","name":"Wim Hof / Box Breathing — 4s dam/habs/bazdam/habs","sets":1,"target":15,"targetType":"minutes","rest":60,"movement":"generic"},{"text":"Peripheral Vision Drill (be yek noghte khire sho)","name":"Peripheral Vision Drill (be yek noghte khire sho)","sets":1,"target":10,"targetType":"minutes","rest":60,"movement":"generic"}]}];
+const DEFAULT_TRAINING=[{"id":"sp_d1","label":"🔴 ROOZ 1: Ghodrat va Hajm-e Bala-tane","day":7,"xp":5,"stats":["Strength","Mind Muscle"],"sub":"Hadaf: arizi-ye sarshane, kolfati-ye sine va zirbaghal (Lats)","run":"🏃 Garm kardan: 10-15min narm + charkhesh-e shane","finisher":"🔥 SA'ED: Hammer Curl ba DUMBBELL 3x15 · Wrist Curl ba DUMBBELL rooye ran 3x20","items":[{"text":"Barfiks-e dast-baz BA VAZNE (dumbell beyn-e pa ya koole-poshti-ye sangin) — ta had-e tavan","name":"Barfiks-e dast-baz BA VAZNE (dumbell beyn-e pa ya koole-poshti-ye sangin) — ta had-e tavan","sets":4,"target":0,"targetType":"none","rest":120,"movement":"generic"},{"text":"Shena-ye DEFICIT (dast-ha rooye 2 DUMBBELL ya 2 takyegah ta sine pain-tar bere)","name":"Shena-ye DEFICIT (dast-ha rooye 2 DUMBBELL ya 2 takyegah ta sine pain-tar bere)","sets":4,"target":15,"targetType":"reps","rest":90,"movement":"generic"},{"text":"Zirbaghal-e DUMBBELL-e kham TEK-DAST (vazne sangin, 3 saniye kontrol-e pain amadan)","name":"Zirbaghal-e DUMBBELL-e kham TEK-DAST (vazne sangin, 3 saniye kontrol-e pain amadan)","sets":4,"target":12,"targetType":"reps","rest":90,"movement":"generic"},{"text":"Shena-ye MANFI (3 saniye maks tu pain) — ta marz-e sookhtan","name":"Shena-ye MANFI (3 saniye maks tu pain) — ta marz-e sookhtan","sets":4,"target":0,"targetType":"none","rest":90,"movement":"generic"},{"text":"Press-e sarshane ba DUMBBELL ya TOOP-E SANGIN (balaye sar)","name":"Press-e sarshane ba DUMBBELL ya TOOP-E SANGIN (balaye sar)","sets":4,"target":15,"targetType":"reps","rest":90,"movement":"generic"},{"text":"MIND-MUSCLE: akhar-e HAR set, azole ro 5 saniye shadid monghabez kon","name":"MIND-MUSCLE: akhar-e HAR set, azole ro 5 saniye shadid monghabez kon","sets":4,"target":5,"targetType":"seconds","rest":30,"movement":"generic"},{"text":"Keshesh (package-e khodet) — tamarkoz: shane va sine","name":"Keshesh (package-e khodet) — tamarkoz: shane va sine","sets":1,"target":10,"targetType":"minutes","rest":0,"movement":"generic"}]},{"id":"sp_d2","label":"🟡 ROOZ 2: Ghodrat-e Pa, Ta'adol va Chabooki","day":1,"xp":5,"stats":["Strength","Balance","Agility"],"sub":"Hadaf: zakhamat-e pa va ghodrat-e enfejari","run":"🏃 Garm kardan: 10min + charkhesh-e moch-e pa va zanoo","finisher":"","items":[{"text":"PISTOL SQUAT (squat-e TEK-PA) — har pa · age sakht-e az sandali komak begir","name":"PISTOL SQUAT (squat-e TEK-PA) — har pa · age sakht-e az sandali komak begir","sets":4,"target":8,"targetType":"reps","rest":90,"movement":"generic"},{"text":"GOBLET SQUAT ba DUMBBELL ya TOOP-E SANGIN (kamelan amigh beshin)","name":"GOBLET SQUAT ba DUMBBELL ya TOOP-E SANGIN (kamelan amigh beshin)","sets":4,"target":15,"targetType":"reps","rest":90,"movement":"generic"},{"text":"LANJ dar hale rah raftan BA DUMBBELL (do dast dumbell) — gham","name":"LANJ dar hale rah raftan BA DUMBBELL (do dast dumbell) — gham","sets":4,"target":20,"targetType":"reps","rest":90,"movement":"generic"},{"text":"Single-Leg RDL: DEDLIFT-e TEK-PA BA DUMBBELL — har pa","name":"Single-Leg RDL: DEDLIFT-e TEK-PA BA DUMBBELL — har pa","sets":3,"target":12,"targetType":"reps","rest":90,"movement":"generic"},{"text":"Saq-e pa istade BA DUMBBELL, TEK-PA","name":"Saq-e pa istade BA DUMBBELL, TEK-PA","sets":5,"target":20,"targetType":"reps","rest":45,"movement":"generic"},{"text":"Keshesh (package-e khodet) — tamarkoz: hamstring va lagan","name":"Keshesh (package-e khodet) — tamarkoz: hamstring va lagan","sets":1,"target":10,"targetType":"minutes","rest":0,"movement":"generic"}]},{"id":"sp_d3","label":"🔵 ROOZ 3: Sor'at, Vakonesh, Did va Enfejar","day":2,"xp":5,"stats":["Speed","Reaction","Vision","Agility"],"sub":"Hadaf: maharati — sor'at-e asabi va sistem-e binaee","run":"🏃 Garm kardan: 10min + parch-e narm","finisher":"","items":[{"text":"Shena-ye ENFEJARI ba dast zadan (Clap Push-up) — BEDUN-E VAZNE","name":"Shena-ye ENFEJARI ba dast zadan (Clap Push-up) — BEDUN-E VAZNE","sets":4,"target":10,"targetType":"reps","rest":90,"movement":"generic"},{"text":"JUMP SQUAT-e enfejari — BEDUN-E VAZNE (faghat vazn-e badan)","name":"JUMP SQUAT-e enfejari — BEDUN-E VAZNE (faghat vazn-e badan)","sets":4,"target":12,"targetType":"reps","rest":90,"movement":"generic"},{"text":"TOOP be DIVAR: toop-e koochik ro part kon, jabeja sho, BA YEK DAST begir — bedun-e tavaghof","name":"TOOP be DIVAR: toop-e koochik ro part kon, jabeja sho, BA YEK DAST begir — bedun-e tavaghof","sets":1,"target":10,"targetType":"minutes","rest":0,"movement":"generic"},{"text":"EYE TRACKING: medad/dumbell jelo-ye chashm — sar TEKAN NAKHORE, faghat mardomak: chap/rast/bala/pain/nazdik-door","name":"EYE TRACKING: medad/dumbell jelo-ye chashm — sar TEKAN NAKHORE, faghat mardomak: chap/rast/bala/pain/nazdik-door","sets":1,"target":3,"targetType":"minutes","rest":0,"movement":"generic"},{"text":"SPRINT INTERVAL: 30s davidan ba tamam-e sor'at / 30s rah raftan","name":"SPRINT INTERVAL: 30s davidan ba tamam-e sor'at / 30s rah raftan","sets":8,"target":30,"targetType":"seconds","rest":30,"movement":"generic"},{"text":"Keshesh (package-e khodet) — tamarkoz: chahar-sar va sine-ye pa","name":"Keshesh (package-e khodet) — tamarkoz: chahar-sar va sine-ye pa","sets":1,"target":10,"targetType":"minutes","rest":0,"movement":"generic"}]},{"id":"sp_d4","label":"🟢 ROOZ 4: Hajm-e Bala-tane va Ghodrat-e Panje","day":3,"xp":5,"stats":["Strength","Mind Muscle","Endurance"],"sub":"Hadaf: Hypertrophy + zakhamat-e sa'ed va panje","run":"🏃 Garm kardan: 10min + avizan shodan-e sabok","finisher":"🔥 SA'ED: PINCH GRIP — DUMBBELL/safhe ro ba SAR-E ANGOSHT begir · 3 set ta marg-e panje","items":[{"text":"CHIN-UP (barfiks-e dast-jam-e baraks) — tamarkoz rooye 3 saniye pain amadan","name":"CHIN-UP (barfiks-e dast-jam-e baraks) — tamarkoz rooye 3 saniye pain amadan","sets":4,"target":0,"targetType":"none","rest":120,"movement":"generic"},{"text":"ARCHER PUSH-UP (shena-ye archer, be chap va rast) — 5 ta har taraf","name":"ARCHER PUSH-UP (shena-ye archer, be chap va rast) — 5 ta har taraf","sets":4,"target":10,"targetType":"reps","rest":90,"movement":"generic"},{"text":"TOOP-E SANGIN ro ba tamam-e ghodrat bekoob be ZAMIN va begir (Ball Slam)","name":"TOOP-E SANGIN ro ba tamam-e ghodrat bekoob be ZAMIN va begir (Ball Slam)","sets":4,"target":15,"targetType":"reps","rest":90,"movement":"generic"},{"text":"DIP rooye sandali/miz BA DUMBBELL rooye pa","name":"DIP rooye sandali/miz BA DUMBBELL rooye pa","sets":4,"target":15,"targetType":"reps","rest":90,"movement":"generic"},{"text":"TOWEL DEAD HANG: ba HOLE az barfiks avizan sho — ta hadaksar zaman","name":"TOWEL DEAD HANG: ba HOLE az barfiks avizan sho — ta hadaksar zaman","sets":4,"target":0,"targetType":"none","rest":120,"movement":"generic"},{"text":"Keshesh (package-e khodet) — tamarkoz: sa'ed va bazoo","name":"Keshesh (package-e khodet) — tamarkoz: sa'ed va bazoo","sets":1,"target":10,"targetType":"minutes","rest":0,"movement":"generic"}]},{"id":"sp_d5","label":"🟣 ROOZ 5: Shekam, File va Esteghamat","day":4,"xp":5,"stats":["Endurance","Balance","Personality"],"sub":"Hadaf: shekam-e ahanin va balabordan-e esteghamat","run":"🏃 Garm kardan: 10min","finisher":"💀 BURPEE: 100 adad dar kamtarin zaman — ta rekord nazadi velesh nakon!","items":[{"text":"L-SIT rooye zamin ya BARFIKS (pa-ha KAMELAN OFOGHI) — ta hadaksar zaman","name":"L-SIT rooye zamin ya BARFIKS (pa-ha KAMELAN OFOGHI) — ta hadaksar zaman","sets":4,"target":0,"targetType":"none","rest":90,"movement":"generic"},{"text":"Pa bala avordan dar halat-e AVIZAN az BARFIKS (Hanging Leg Raise)","name":"Pa bala avordan dar halat-e AVIZAN az BARFIKS (Hanging Leg Raise)","sets":4,"target":15,"targetType":"reps","rest":90,"movement":"generic"},{"text":"Charkhesh-e ROSI BA TOOP-E SANGIN (Russian Twist)","name":"Charkhesh-e ROSI BA TOOP-E SANGIN (Russian Twist)","sets":4,"target":30,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Pol-e kamar / File BA VAZNE rooye shekam (Glute Bridge / Back Extension)","name":"Pol-e kamar / File BA VAZNE rooye shekam (Glute Bridge / Back Extension)","sets":4,"target":20,"targetType":"reps","rest":60,"movement":"generic"},{"text":"Keshesh (package-e khodet) — tamarkoz: kamar va shekam","name":"Keshesh (package-e khodet) — tamarkoz: kamar va shekam","sets":1,"target":10,"targetType":"minutes","rest":0,"movement":"generic"}]},{"id":"sp_d6","label":"🟠 ROOZ 6: Chabooki-ye Tarkibi va Ghodrat-e Koll","day":5,"xp":5,"stats":["Strength","Agility","Endurance"],"sub":"Hadaf: tarkib-e ghodrat va sor'at — challenge-e koll-e sistem-e asabi","run":"🏃 Garm kardan: 10min","finisher":"🔥 SA'ED: Hammer Curl ba DUMBBELL 3x15 · Wrist Curl ba DUMBBELL rooye ran 3x20","items":[{"text":"MODAR-E MARG: 10 BARFIKS + 20 SHENA + 30 SQUAT ba DUMBBELL = 1 door · BEDUN-E esterahat tu door","name":"MODAR-E MARG: 10 BARFIKS + 20 SHENA + 30 SQUAT ba DUMBBELL = 1 door · BEDUN-E esterahat tu door","sets":4,"target":1,"targetType":"reps","rest":120,"movement":"generic"},{"text":"FARMER'S WALK: rah raftan ba SANGINTARIN DUMBBELL-ha (do dast)","name":"FARMER'S WALK: rah raftan ba SANGINTARIN DUMBBELL-ha (do dast)","sets":4,"target":60,"targetType":"seconds","rest":90,"movement":"generic"},{"text":"SHUTTLE RUN: 5 metr bodo, zamin ro LAMS kon, bargard — 10 bar = 1 set","name":"SHUTTLE RUN: 5 metr bodo, zamin ro LAMS kon, bargard — 10 bar = 1 set","sets":4,"target":10,"targetType":"reps","rest":90,"movement":"generic"},{"text":"Keshesh (package-e khodet) — koll-e badan","name":"Keshesh (package-e khodet) — koll-e badan","sets":1,"target":10,"targetType":"minutes","rest":0,"movement":"generic"}]},{"id":"sp_d7","label":"⚪ ROOZ 7: Rikavari-ye Faal, Zehn va Keshesh","day":6,"xp":5,"stats":["Flexibility","Intelligence","Vision","Personality"],"sub":"Hich vazne va feshari nist — zehn va a'sab ertegha peyda mikonan","run":"🚶 Rah raftan-e aram 20min (bedun-e feshar)","finisher":"🥶 DOOSH-E AB-E SARD: 3 ta 5 daghighe — akhar-e rooz","items":[{"text":"PACKAGE-E KESHESH-E KAMEL — tamarkoz: LAGAN, HAMSTRING va SHANE","name":"PACKAGE-E KESHESH-E KAMEL — tamarkoz: LAGAN, HAMSTRING va SHANE","sets":1,"target":45,"targetType":"minutes","rest":0,"movement":"generic"},{"text":"TANAFFOS (Wim Hof / Box): 4s dam · 4s habs · 4s bazdam · 4s habs","name":"TANAFFOS (Wim Hof / Box): 4s dam · 4s habs · 4s bazdam · 4s habs","sets":1,"target":15,"targetType":"minutes","rest":0,"movement":"generic"},{"text":"DID-E PIRAMOONI: be yek noghte khire sho, BEDUN-E charkhandan-e chashm ashya-e atraf ro tashkhis bede","name":"DID-E PIRAMOONI: be yek noghte khire sho, BEDUN-E charkhandan-e chashm ashya-e atraf ro tashkhis bede","sets":1,"target":10,"targetType":"minutes","rest":0,"movement":"generic"}]}];
 const DEFAULT_SECTIONS=[{title:"🌅 Morning",color:"",tasks:[]},{title:"☀️ Afternoon",color:"",tasks:[]},{title:"🌇 Sunset",color:"",tasks:[]},{title:"🌙 Night",color:"",tasks:[]}];
 const DEFAULT_STATS={"Flexibility":0,"Strength":0,"Endurance":0,"Balance":0,"Agility":0,"Speed":0,"Intelligence":0,"Mind Muscle":0,"Personality":0,"Vision":0,"Reaction":0};
 // === UTILS ===
@@ -9161,7 +9246,7 @@ document.getElementById("backupBtn").addEventListener("click",async ()=>{
     'lvl13_shop_state_v1','lvl13_coin_claims_v1','lvl13_boss_balance_hard_v1',
     'lvl13_daylog_v2','lvl13_pet_hunger_last_v1','lvl13_weather',
     'lvl13_videos_db_v2','lvl13_videos_fallback_v2',
-    'lvl13_custom_moves','lvl13_pose_pb','lvl13_pose_tools','lvl13_pb_wiped_v2','lvl13_game_best_v1','lvl13_stat_daily','lvl13_boss_kills_v1','lvl13_boss_pushup_v1','lvl13_punish_v1','lvl13_perf_lite_v1','lvl13_pose_fps_v1','lvl13_pose_res_v1','lvl13_boss_unlock_all_v1','lvl13_pose_rot_v1','lvl13_pose_frame_v1','lvl13_habit_v1','lvl13_antifarm_v1','lvl13_cam_off_v1','lvl13_rep_off_v1'
+    'lvl13_custom_moves','lvl13_pose_pb','lvl13_pose_tools','lvl13_pb_wiped_v2','lvl13_game_best_v1','lvl13_stat_daily','lvl13_boss_kills_v1','lvl13_boss_pushup_v1','lvl13_punish_v1','lvl13_perf_lite_v1','lvl13_pose_fps_v1','lvl13_pose_res_v1','lvl13_boss_unlock_all_v1','lvl13_pose_rot_v1','lvl13_pose_frame_v1','lvl13_habit_v1','lvl13_antifarm_v1','lvl13_cam_off_v1','lvl13_rep_off_v1','lvl13_exlog_v1'
   ]);
   const data={};
   ALL_KEYS.forEach(k=>{try{const v=localStorage.getItem(k);if(v!==null&&v!=='')data[k]=v;}catch(e){}});
@@ -23373,5 +23458,247 @@ ready(function(){
 })();
 </script>
 
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3a51f8528f551e0',t:'MTc4OTI4MTIzNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+
+<!-- ============================================================
+     EXERCISE LOG v1 — "Rekord-e har harekat"
+     ------------------------------------------------------------
+     Khaste-ye karbar: "yek ghesmat ezafe kon ke beshe rekord-e har
+     harekati ke raftim ro bebinim va hafte-ye ba'ad bishtaresh konim."
+
+     Chetor kar mikone:
+       - Kenar-e esm-e har harekat tu modal-e tamrin yek dokme-ye
+         "📈 Rekord" hast. Mizani -> panel baz mishe:
+            * behtarin rekord (vazne x tekrar)
+            * akharin bar chi zadi
+            * HADAF-E HAFTE-YE BA'AD (khodkar +1 tekrar ya +1kg)
+            * tarikhche-ye kamel
+       - Sabt: vazne (kg) + tekrar + yaddasht.
+     Kelid-e jodagane: lvl13_exlog_v1  (tu backup ham hast)
+     Hich code-e ghadimi dast nakhorde.
+     ============================================================ -->
+<style>
+.exlog-btn{
+  flex:0 0 auto;cursor:pointer;margin-inline-start:6px;
+  border:1px solid rgba(250,204,21,.45);border-radius:8px;
+  background:rgba(202,138,4,.15);color:#fde047;
+  font:900 10px/1 Arial,sans-serif;padding:5px 8px;white-space:nowrap;
+}
+.exlog-btn:active{transform:scale(.96)}
+.exlog-btn.has{border-color:rgba(34,197,94,.5);background:rgba(22,163,74,.18);color:#86efac}
+#exlogOv{position:fixed;inset:0;z-index:12100;background:rgba(2,4,8,.94);
+  display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto}
+.exlog-card{width:min(460px,96vw);max-height:92vh;overflow:auto;border-radius:20px;padding:18px;
+  border:2px solid rgba(250,204,21,.4);background:linear-gradient(150deg,#12100a,#050505);
+  box-shadow:0 0 50px rgba(250,204,21,.18)}
+.exlog-t{font:950 15px/1.4 Arial,sans-serif;color:#fde047;margin-bottom:3px;unicode-bidi:plaintext}
+.exlog-s{font:800 10.5px/1.5 Arial,sans-serif;color:#94a3b8;margin-bottom:12px;unicode-bidi:plaintext}
+.exlog-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.exlog-box{padding:10px;border-radius:12px;background:rgba(148,163,184,.08);
+  border:1px solid rgba(148,163,184,.22);text-align:center}
+.exlog-box b{display:block;font:950 17px/1.2 Arial,sans-serif;color:#fff}
+.exlog-box span{font:800 9.5px/1.3 Arial,sans-serif;color:#94a3b8;unicode-bidi:plaintext}
+.exlog-box.pb{border-color:rgba(250,204,21,.45);background:rgba(202,138,4,.14)}
+.exlog-box.pb b{color:#fde047}
+.exlog-goal{padding:11px;border-radius:12px;margin-bottom:12px;text-align:center;
+  border:1px solid rgba(34,197,94,.45);background:rgba(22,163,74,.14);
+  font:900 12px/1.6 Arial,sans-serif;color:#86efac;unicode-bidi:plaintext}
+.exlog-in{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.exlog-in input,.exlog-note{width:100%;box-sizing:border-box;padding:10px;border-radius:10px;
+  border:1px solid rgba(148,163,184,.3);background:rgba(2,6,23,.9);color:#fff;
+  font:900 15px/1 Arial,sans-serif;text-align:center}
+.exlog-note{font:800 11px/1.5 Arial,sans-serif;text-align:start;margin-bottom:8px}
+.exlog-lbl{font:900 9px/1 Arial,sans-serif;color:#94a3b8;margin-bottom:4px;display:block;text-align:center}
+.exlog-row{display:flex;gap:8px;margin-top:4px}
+.exlog-b{flex:1;min-height:46px;border:none;border-radius:12px;cursor:pointer;
+  font:950 13px/1 Arial,sans-serif;color:#fff}
+.exlog-ok{background:linear-gradient(135deg,#16a34a,#059669)}
+.exlog-no{background:rgba(100,116,139,.35);color:#cbd5e1}
+.exlog-hist{margin-top:12px;max-height:210px;overflow:auto}
+.exlog-hr{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:9px;
+  background:rgba(148,163,184,.06);margin-bottom:5px;
+  font:800 10.5px/1.4 Arial,sans-serif;color:#cbd5e1;unicode-bidi:plaintext}
+.exlog-hr i{color:#64748b;font-style:normal;min-width:76px}
+.exlog-hr b{color:#fff;font-weight:950}
+.exlog-hr.best{border:1px solid rgba(250,204,21,.4);background:rgba(202,138,4,.12)}
+.exlog-del{margin-inline-start:auto;cursor:pointer;border:1px solid rgba(248,113,113,.4);
+  border-radius:6px;background:rgba(69,10,10,.5);color:#fca5a5;font:900 9px/1 Arial,sans-serif;padding:3px 6px}
+.exlog-empty{text-align:center;color:#64748b;font:800 10.5px/1.6 Arial,sans-serif;padding:14px}
+</style>
+<script>
+(function(){
+function ready(fn){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fn);else fn();}
+ready(function(){
+
+  var LKEY='lvl13_exlog_v1';
+  function load(){ try{return JSON.parse(localStorage.getItem(LKEY)||'{}')||{};}catch(e){return {};} }
+  function save(o){ try{localStorage.setItem(LKEY,JSON.stringify(o));}catch(e){} }
+  function today(){
+    try{ if(typeof getTzDateStr==='function')return getTzDateStr(); }catch(e){}
+    return new Date().toISOString().slice(0,10);
+  }
+  /* kelid = esm-e harekat (tamiz shode) ta beyn-e rooz-ha yeki bashe */
+  function keyOf(name){ return String(name||'').trim().toLowerCase().slice(0,80); }
+
+  function score(r){ return (Number(r.w)||0)*1000 + (Number(r.reps)||0); }
+  function best(list){
+    var b=null; (list||[]).forEach(function(r){ if(!b||score(r)>score(b))b=r; }); return b;
+  }
+  function fmt(r){
+    if(!r)return '—';
+    var w=Number(r.w)||0, rp=Number(r.reps)||0;
+    return (w>0?(w+'kg \u00D7 '):'')+rp;
+  }
+
+  function open(name){
+    var all=load(), k=keyOf(name), list=(all[k]||[]).slice();
+    list.sort(function(a,b){ return (b.d||'').localeCompare(a.d||''); });
+    var pb=best(list), last=list[0]||null;
+
+    /* hadaf-e hafte-ye ba'ad: +1 tekrar (ya age vazne dare, +1kg) */
+    var goal='Avvalin bar ro sabt kon!';
+    if(pb){
+      var w=Number(pb.w)||0, rp=Number(pb.reps)||0;
+      goal = w>0
+        ? ('\uD83C\uDFAF Hafte-ye ba\'ad: '+w+'kg \u00D7 '+(rp+1)+'  YA  '+(w+1)+'kg \u00D7 '+rp)
+        : ('\uD83C\uDFAF Hafte-ye ba\'ad: '+(rp+1)+' tekrar');
+    }
+
+    var old=document.getElementById('exlogOv'); if(old)old.remove();
+    var ov=document.createElement('div'); ov.id='exlogOv';
+    ov.innerHTML='<div class="exlog-card">'
+      +'<div class="exlog-t">\uD83D\uDCC8 '+String(name).replace(/[<>]/g,'')+'</div>'
+      +'<div class="exlog-s">Rekord-e in harekat \u2014 har hafte 1 tekrar ya 1kg bishtar!</div>'
+      +'<div class="exlog-stats">'
+      +'<div class="exlog-box pb"><b>'+fmt(pb)+'</b><span>BEHTARIN REKORD</span></div>'
+      +'<div class="exlog-box"><b>'+fmt(last)+'</b><span>AKHARIN BAR</span></div>'
+      +'</div>'
+      +'<div class="exlog-goal">'+goal+'</div>'
+      +'<div class="exlog-in">'
+      +'<div><span class="exlog-lbl">VAZNE (kg)</span><input id="exlogW" type="number" min="0" step="0.5" placeholder="0" value="'+(pb?(Number(pb.w)||''):'')+'"/></div>'
+      +'<div><span class="exlog-lbl">TEKRAR / SANIYE</span><input id="exlogR" type="number" min="0" step="1" placeholder="0"/></div>'
+      +'</div>'
+      +'<input class="exlog-note" id="exlogN" maxlength="60" placeholder="Yaddasht (ekhtiari)..."/>'
+      +'<div class="exlog-row">'
+      +'<button class="exlog-b exlog-no" id="exlogX">Baste</button>'
+      +'<button class="exlog-b exlog-ok" id="exlogS">\u2705 Sabt-e rekord</button>'
+      +'</div>'
+      +'<div class="exlog-hist" id="exlogH"></div>'
+      +'</div>';
+    document.body.appendChild(ov);
+
+    function paintHist(){
+      var a2=load(), l2=(a2[k]||[]).slice();
+      l2.sort(function(x,y){ return (y.d||'').localeCompare(x.d||''); });
+      var pb2=best(l2);
+
+      /* FIX: kart-haye bala (behtarin / akharin / hadaf) ham bayad
+         baad az har sabt taze beshan, vagarna '—' mimoonan. */
+      try{
+        var bx=ov.querySelectorAll('.exlog-box b');
+        if(bx[0])bx[0].textContent=fmt(pb2);
+        if(bx[1])bx[1].textContent=fmt(l2[0]||null);
+        var g=ov.querySelector('.exlog-goal');
+        if(g){
+          if(!pb2){ g.textContent='Avvalin bar ro sabt kon!'; }
+          else{
+            var gw=Number(pb2.w)||0, gr=Number(pb2.reps)||0;
+            g.textContent = gw>0
+              ? ('\uD83C\uDFAF Hafte-ye ba\'ad: '+gw+'kg \u00D7 '+(gr+1)+'  YA  '+(gw+1)+'kg \u00D7 '+gr)
+              : ('\uD83C\uDFAF Hafte-ye ba\'ad: '+(gr+1)+' tekrar');
+          }
+        }
+      }catch(e){}
+
+      var box=document.getElementById('exlogH');
+      if(!l2.length){ box.innerHTML='<div class="exlog-empty">Hanooz rekordi sabt nashode.</div>'; return; }
+      box.innerHTML=l2.map(function(r,i){
+        var isPb=pb2&&score(r)===score(pb2);
+        return '<div class="exlog-hr'+(isPb?' best':'')+'">'
+          +'<i>'+(r.d||'')+'</i>'
+          +'<b>'+fmt(r)+'</b>'
+          +(isPb?' \uD83C\uDFC6':'')
+          +(r.n?('<span style="color:#94a3b8"> \u00B7 '+String(r.n).replace(/[<>]/g,'')+'</span>'):'')
+          +'<button class="exlog-del" data-i="'+i+'">\u2715</button></div>';
+      }).join('');
+      box.querySelectorAll('.exlog-del').forEach(function(b){
+        b.addEventListener('click',function(){
+          if(!confirm('In rekord pak beshe?'))return;
+          var idx=+b.getAttribute('data-i');
+          var a3=load(), l3=(a3[k]||[]).slice();
+          l3.sort(function(x,y){ return (y.d||'').localeCompare(x.d||''); });
+          l3.splice(idx,1);
+          a3[k]=l3; if(!l3.length)delete a3[k];
+          save(a3); paintHist(); paintBtns();
+        });
+      });
+    }
+    paintHist();
+
+    function close(){ try{ov.remove();}catch(e){} }
+    document.getElementById('exlogX').onclick=close;
+    ov.addEventListener('click',function(e){ if(e.target===ov)close(); });
+    document.getElementById('exlogS').onclick=function(){
+      var w=parseFloat(document.getElementById('exlogW').value)||0;
+      var rp=parseInt(document.getElementById('exlogR').value,10)||0;
+      var n=(document.getElementById('exlogN').value||'').trim().slice(0,60);
+      if(rp<=0 && w<=0){ try{toast('\u26A0\uFE0F Adad ro vared kon');}catch(e){} return; }
+      var a4=load(); a4[k]=a4[k]||[];
+      var oldPb=best(a4[k]);
+      a4[k].push({d:today(),w:w,reps:rp,n:n});
+      save(a4);
+      var newPb=best(a4[k]);
+      if(!oldPb || score(newPb)>score(oldPb)){
+        try{toast('\uD83C\uDFC6 REKORD-E JADID: '+fmt(newPb));}catch(e){}
+        try{ if(typeof confetti==='function')confetti(); }catch(e){}
+        try{ if(typeof playGameSfx==='function')playGameSfx('win'); }catch(e){}
+      }else{
+        try{toast('\u2705 Sabt shod: '+fmt({w:w,reps:rp}));}catch(e){}
+      }
+      document.getElementById('exlogR').value='';
+      document.getElementById('exlogN').value='';
+      paintHist(); paintBtns();
+      /* stat-e ghodrat ham ye chizi begire */
+      try{ if(typeof addStatXP==='function')addStatXP(['Strength'],1); }catch(e){}
+    };
+    setTimeout(function(){ try{document.getElementById('exlogR').focus();}catch(e){} },120);
+  }
+  window.__openExLog=open;
+
+  /* ---- dokme kenar-e esm-e har harekat ---- */
+  function paintBtns(){
+    var modal=document.getElementById('workoutModal');
+    if(!modal || modal.classList.contains('hidden'))return;
+    var list=document.getElementById('workoutList'); if(!list)return;
+    var all=load();
+    list.querySelectorAll('li').forEach(function(li){
+      if(!li.querySelector('.sets-control'))return;
+      var head=li.querySelector('.item-header'); if(!head)return;
+      var nameEl=li.querySelector('.item-text'); if(!nameEl)return;
+      var nm=nameEl.textContent||'';
+      var b=head.querySelector('.exlog-btn');
+      var has=(all[keyOf(nm)]||[]).length>0;
+      if(!b){
+        b=document.createElement('button');
+        b.type='button'; b.className='exlog-btn';
+        b.addEventListener('click',function(e){
+          e.preventDefault(); e.stopPropagation();
+          var n2=(li.querySelector('.item-text')||{}).textContent||'';
+          open(n2);
+        });
+        head.appendChild(b);
+      }
+      var pb=best(all[keyOf(nm)]);
+      var want = has ? ('\uD83C\uDFC6 '+fmt(pb)) : '\uD83D\uDCC8 Rekord';
+      if(b.textContent!==want)b.textContent=want;
+      if(b.classList.contains('has')!==has)b.classList.toggle('has',has);
+      b.title='Rekord-e in harekat';
+    });
+  }
+  setInterval(paintBtns,500);
+
+});
+})();
+</script>
+
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3a588088c9a9e07',t:'MTc4OTI4NTUxNQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
