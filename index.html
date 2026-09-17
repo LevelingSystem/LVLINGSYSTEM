@@ -140,6 +140,15 @@
     line-height:1.7;outline:none}
   .sheet textarea:focus{border-color:var(--accent2)}
   .grab{width:42px;height:4px;background:var(--line);border-radius:9px;margin:0 auto 12px}
+
+  #toast{position:fixed;left:50%;transform:translateX(-50%) translateY(140%);
+    bottom:calc(18px + env(safe-area-inset-bottom));z-index:200;max-width:90vw;
+    background:var(--accent);color:#04121c;font-weight:bold;font-size:13.5px;
+    padding:12px 16px;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.45);
+    transition:transform .3s cubic-bezier(.2,1.2,.4,1);text-align:center}
+  #toast.warn{background:var(--warn)}
+  #toast.info{background:var(--accent2)}
+  #toast.show{transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
@@ -184,6 +193,8 @@
     <div class="card"><div class="stats" id="dayStats"></div></div>
   </div>
 </div>
+
+<div id="toast"></div>
 
 <div class="modal hide" id="noteModal">
   <div class="sheet" id="sheet">
@@ -361,8 +372,6 @@ function renderDay(){
         <input type="number" inputmode="numeric" min="0" value="${pr||''}" placeholder="—" style="width:70px" data-i="${ix}" data-f="pr" title="Personal best">
         <span class="unit">reps</span>
         ${e.prDate?`<span class="recdate">📅 ${jal(e.prDate,{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
-        ${pr&&+e.count>=pr?'<span class="pr">🔥 New record!</span>':''}
-        <button class="mini" data-pr="${ix}" title="Save today's reps as your record">Set record (${e.count})</button>
       </div>
       <div class="exrow">
         <div class="fld"><label>Reps</label><input type="number" inputmode="numeric" min="0" value="${e.count}" data-i="${ix}" data-f="count"></div>
@@ -385,7 +394,7 @@ function renderDay(){
 
 addBtn.onclick=()=>{
   const n=exName.value.trim(),c=+exCount.value,s=+exSets.value||1;
-  if(!n||!c){SFX.error();alert('Please enter an exercise name and reps.');return;}
+  if(!n||!c){SFX.error();toast('⚠️ Enter an exercise name and reps.');return;}
   plan(current).push({id:uid(),name:n,count:c,sets:s,pr:0,prDate:'',note:''});
   exName.value='';exCount.value='';exSets.value=1;save();renderDay();exName.focus();SFX.add();
 };
@@ -397,7 +406,7 @@ exList.addEventListener('click',e=>{
   if(inf){openNote(+inf.dataset.note);return;}
   const t=e.target.closest('.set'), d=e.target.dataset.del;
   if(t){
-    if(current!==wdToday()){SFX.error();alert('You can only check off sets on the current day (Iran time).');return;}
+    if(current!==wdToday()){SFX.error();toast('🔒 You can only check off sets on today (Iran time).');return;}
     const ex=plan(current)[+t.dataset.ex], ns=+ex.sets||1, si=+t.dataset.set;
     const L=logToday(), arr=setsOf(ex.id,ns);
     arr[si]=!arr[si]; L[ex.id]=arr; save(); renderDay();
@@ -405,19 +414,17 @@ exList.addEventListener('click',e=>{
       const items=plan(current);
       const allDone=items.every(x=>{const n=+x.sets||1;return doneSets(x.id,n)>=n;});
       if(allDone){SFX.record();if(navigator.vibrate)navigator.vibrate([25,60,25,60,45]);
-        setTimeout(()=>alert('🔥 Day complete! Streak: '+streaks().cur+' day(s)'),120);}
+        setTimeout(()=>toast('🔥 Day complete! Streak: '+streaks().cur+' day(s)'),80);}
       else arr.every(Boolean)?SFX.complete():SFX.check();
     } else SFX.uncheck();
     renderWeek();
-  } else if(e.target.dataset.pr!==undefined){
-    const ex=plan(current)[+e.target.dataset.pr], c=+ex.count||0;
-    if(!c){SFX.error();alert('Please enter the reps first.');return;}
-    if((+ex.pr||0)>c && !confirm('Your current record is higher. Replace it?'))return;
-    ex.pr=c; ex.prDate=todayKey(); save(); renderDay(); SFX.record();
-    setTimeout(()=>alert('🏅 Record saved: '+c+' reps'),50);
   } else if(d!==undefined&&confirm('Remove this exercise from the plan?')){
     plan(current).splice(+d,1);save();renderDay();SFX.delete();
   }
+});
+let prBefore=null;
+exList.addEventListener('focusin',e=>{
+  if(e.target.dataset.f==='pr') prBefore=+plan(current)[e.target.dataset.i].pr||0;
 });
 exList.addEventListener('input',e=>{
   const i=e.target.dataset.i;if(i===undefined)return;
@@ -426,13 +433,23 @@ exList.addEventListener('input',e=>{
   if(f==='pr') ex.prDate=todayKey();
   save();
 });
-exList.addEventListener('change',()=>renderDay());
+exList.addEventListener('change',e=>{
+  if(e.target.dataset.f==='pr'){
+    const ex=plan(current)[e.target.dataset.i], now=+ex.pr||0, was=prBefore||0;
+    if(now>was){
+      SFX.record(); if(navigator.vibrate)navigator.vibrate([20,50,20,50,40]);
+      toast(`🏅 New record for ${ex.name}: ${now} reps (was ${was||'—'})`);
+    }
+    prBefore=null;
+  }
+  renderDay();
+});
 
 exportBtn.onclick=()=>{const b=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='workout-plan.json';a.click();};
 importBtn.onclick=()=>fileIn.click();
 fileIn.onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();
-  r.onload=()=>{try{const o=JSON.parse(r.result);if(!o.plan)throw 0;db=o;save();renderWeek();}catch{alert('Invalid file');}};
+  r.onload=()=>{try{const o=JSON.parse(r.result);if(!o.plan)throw 0;db=o;save();renderWeek();}catch{toast('⚠️ Invalid file');}};
   r.readAsText(f);};
 
 soundBtn.onclick=()=>{soundOn=!soundOn;localStorage.setItem(SKEY,soundOn?'1':'0');
@@ -458,6 +475,10 @@ noteSave.onclick=()=>{
 noteClose.onclick=()=>{closeNote();SFX.back();};
 noteModal.addEventListener('click',e=>{if(e.target===noteModal){closeNote();SFX.back();}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!noteModal.classList.contains('hide'))closeNote();});
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;
+  t.className='show'+(/⚠️|🔒/.test(msg)?' warn':(/📝|ℹ️/.test(msg)?' info':''));
+  clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),3200);}
 
 tick();setInterval(tick,1000);renderWeek();
 </script>
