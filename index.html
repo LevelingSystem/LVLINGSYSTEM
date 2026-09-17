@@ -141,14 +141,15 @@
   .sheet textarea:focus{border-color:var(--accent2)}
   .grab{width:42px;height:4px;background:var(--line);border-radius:9px;margin:0 auto 12px}
 
-  #toast{position:fixed;left:50%;transform:translateX(-50%) translateY(140%);
-    bottom:calc(18px + env(safe-area-inset-bottom));z-index:200;max-width:90vw;
+  #toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));
+    transform:translateX(-50%) translateY(20px);z-index:200;max-width:90vw;
     background:var(--accent);color:#04121c;font-weight:bold;font-size:13.5px;
     padding:12px 16px;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.45);
-    transition:transform .3s cubic-bezier(.2,1.2,.4,1);text-align:center}
+    text-align:center;opacity:0;visibility:hidden;pointer-events:none;
+    transition:opacity .25s ease, transform .25s ease, visibility .25s}
   #toast.warn{background:var(--warn)}
   #toast.info{background:var(--accent2)}
-  #toast.show{transform:translateX(-50%) translateY(0)}
+  #toast.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
 
   select{font-family:inherit;font-size:15px;border-radius:10px;border:1px solid var(--line);
     background:#0f131a;color:var(--txt);padding:10px 8px;outline:none;min-height:44px}
@@ -156,12 +157,49 @@
   .fld select{border:none;background:transparent;padding:6px 2px;min-height:0;font-size:14px}
   .amrap{color:var(--warn);font-weight:bold}
   .fld.dim{opacity:.35}
+
+  /* ===== tabs & notebooks ===== */
+  .tabs{display:flex;gap:8px;margin-bottom:14px;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:5px}
+  .tabs button{flex:1;background:transparent;color:var(--muted);font-weight:bold;min-height:42px;border-radius:10px}
+  .tabs button.on{background:var(--accent2);color:#04121c}
+  .nbgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  @media(max-width:560px){.nbgrid{grid-template-columns:1fr 1fr}}
+  .nb{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;
+    transition:.15s;position:relative;overflow:hidden}
+  .nb:hover{border-color:var(--accent2);transform:translateY(-2px)}
+  .nb:active{transform:scale(.98)}
+  .nb .ic{font-size:22px}
+  .nb .t{font-size:15px;font-weight:bold;margin:6px 0 3px;word-break:break-word}
+  .nb .pv{font-size:11px;color:var(--muted);line-height:1.6;max-height:34px;overflow:hidden}
+  .nb .mt{font-size:10px;color:var(--muted);margin-top:8px;opacity:.8}
+  .nbnew{border-style:dashed;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    color:var(--accent);min-height:110px;font-weight:bold;font-size:14px;gap:4px}
+  #nbEditor textarea{width:100%;min-height:52vh;resize:vertical;background:#0f131a;color:var(--txt);
+    border:1px solid var(--line);border-radius:12px;padding:13px;font:inherit;font-size:15.5px;
+    line-height:1.85;outline:none}
+  #nbEditor textarea:focus{border-color:var(--accent2)}
+  #nbTitleIn{flex:1;min-width:140px;font-weight:bold;font-size:16px}
+  .saved{font-size:11px;color:var(--accent);opacity:0;transition:.3s}
+  .saved.on{opacity:1}
+
+  .nbact{position:absolute;top:8px;right:8px;display:flex;gap:4px;z-index:2}
+  .iconbtn{width:30px;height:30px;border-radius:9px;background:#0f131a;border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer}
+  .iconbtn:active{transform:scale(.88)}
+  .iconbtn.del:hover{border-color:#ef4444}
+  .nb .ic{margin-top:4px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>🏋️ Weekly Workout Tracker</h1>
   <div class="sub"><span class="clock" id="clock"></span></div>
+
+  <div class="tabs" id="tabs">
+    <button id="tabWorkout" class="on" data-nosfx="1">🏋️ Workout</button>
+    <button id="tabNotes" data-nosfx="1">📒 Notes</button>
+  </div>
 
   <div id="weekView">
     <div class="days" id="days"></div>
@@ -175,6 +213,31 @@
         <button class="ghost" id="importBtn">📥 Import</button>
         <input type="file" id="fileIn" accept="application/json" hidden>
       </span>
+    </div>
+  </div>
+
+  <!-- ===== Notes: notebook list ===== -->
+  <div id="nbList" class="hide">
+    <div class="card row" style="gap:8px">
+      <input id="nbName" placeholder="Note title (e.g. Rules, Life, Diet)" style="flex:1;min-width:170px">
+      <button id="nbAdd">➕ Add note</button>
+    </div>
+    <div class="nbgrid" id="nbGrid"></div>
+  </div>
+
+  <!-- ===== Notes: editor ===== -->
+  <div id="nbEditor" class="hide">
+    <div class="card row topbar" style="justify-content:space-between">
+      <button class="ghost" id="nbBack">‹ Back</button>
+      <input id="nbTitleIn" placeholder="Title">
+      <span class="saved" id="nbSaved">✔ Saved</span>
+    </div>
+    <div class="card">
+      <textarea id="nbBody" placeholder="Write anything here…"></textarea>
+      <div class="row" style="margin-top:12px;justify-content:space-between">
+        <button class="danger" id="nbDel">🗑 Delete note</button>
+        <span style="font-size:11px;color:var(--muted)" id="nbMeta"></span>
+      </div>
     </div>
   </div>
 
@@ -211,6 +274,19 @@
 </div>
 
 <div id="toast"></div>
+
+<div class="modal hide" id="renModal">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h3>✏️ Rename note</h3>
+    <div class="who">Give this note a new title</div>
+    <input id="renInput" style="width:100%;font-size:16px" placeholder="Note title">
+    <div class="row" style="margin-top:12px;justify-content:space-between">
+      <button class="ghost" id="renCancel">Cancel</button>
+      <button id="renSave">💾 Save</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal hide" id="noteModal">
   <div class="sheet" id="sheet">
@@ -482,7 +558,7 @@ exportBtn.onclick=()=>{const b=new Blob([JSON.stringify(db,null,2)],{type:'appli
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='workout-plan.json';a.click();};
 importBtn.onclick=()=>fileIn.click();
 fileIn.onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();
-  r.onload=()=>{try{const o=JSON.parse(r.result);if(!o.plan)throw 0;db=o;save();renderWeek();}catch{toast('⚠️ Invalid file');}};
+  r.onload=()=>{try{const o=JSON.parse(r.result);if(!o.plan)throw 0;db=o;if(!db.notes)db.notes=[];save();renderWeek();renderNotes();}catch{toast('⚠️ Invalid file');}};
   r.readAsText(f);};
 
 soundBtn.onclick=()=>{soundOn=!soundOn;localStorage.setItem(SKEY,soundOn?'1':'0');
@@ -509,9 +585,118 @@ noteClose.onclick=()=>{closeNote();SFX.back();};
 noteModal.addEventListener('click',e=>{if(e.target===noteModal){closeNote();SFX.back();}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!noteModal.classList.contains('hide'))closeNote();});
 
-function toast(msg){const t=document.getElementById('toast');t.textContent=msg;
+function toast(msg){const t=document.getElementById('toast');
+  if(!msg){t.className='';return;}
+  t.textContent=msg;
   t.className='show'+(/⚠️|🔒/.test(msg)?' warn':(/📝|ℹ️/.test(msg)?' info':''));
-  clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),3200);}
+  clearTimeout(toast.t);toast.t=setTimeout(()=>{t.className='';t.textContent='';},3000);}
+
+
+/* ===== Notes (notebooks) ===== */
+if(!db.notes)db.notes=[];
+let nbCur=null;
+const show=el=>el.classList.remove('hide');
+const hideEl=el=>el.classList.add('hide');
+
+function switchTab(t){
+  nbCur=null;current=null;
+  [weekView,dayView,nbList,nbEditor].forEach(hideEl);
+  tabWorkout.classList.toggle('on',t==='w');
+  tabNotes.classList.toggle('on',t==='n');
+  if(t==='w'){show(weekView);renderWeek();}else{show(nbList);renderNotes();}
+  SFX.click();scrollTo(0,0);
+}
+tabWorkout.onclick=()=>switchTab('w');
+tabNotes.onclick=()=>switchTab('n');
+
+const ICONS=['📌','📋','💡','🎯','🍎','🧠','💬','⭐','🔥','📖'];
+function renderNotes(){
+  nbGrid.innerHTML='';
+  db.notes.forEach((n,i)=>{
+    const el=document.createElement('div');
+    el.className='nb';
+    el.innerHTML=`<div class="nbact">
+        <span class="iconbtn" data-ren="${i}" title="Rename">✏️</span>
+        <span class="iconbtn del" data-rm="${i}" title="Delete">🗑</span>
+      </div>
+      <div class="ic">${n.icon||'📝'}</div>
+      <div class="t">${esc(n.title)}</div>
+      <div class="pv">${esc((n.body||'').slice(0,90))||'<i>Empty…</i>'}</div>
+      <div class="mt">${n.body?(n.body.trim().split(/\s+/).length+' words'):'no content'}${n.date?' • '+jal(n.date,{day:'numeric',month:'short'}):''}</div>`;
+    el.onclick=ev=>{
+      const r=ev.target.closest('[data-ren]'), d=ev.target.closest('[data-rm]');
+      if(r){ev.stopPropagation();renameNb(+r.dataset.ren);return;}
+      if(d){ev.stopPropagation();deleteNb(+d.dataset.rm);return;}
+      openNb(i);
+    };
+    nbGrid.appendChild(el);
+  });
+}
+
+let pendingDel=null;
+function deleteNb(i){
+  if(pendingDel===i){
+    const t=db.notes[i].title;
+    db.notes.splice(i,1);pendingDel=null;save();renderNotes();SFX.delete();toast('🗑 Deleted "'+t+'"');
+    return;
+  }
+  pendingDel=i;SFX.error();toast('⚠️ Tap 🗑 again to delete "'+db.notes[i].title+'"');
+  clearTimeout(deleteNb.t);deleteNb.t=setTimeout(()=>pendingDel=null,3200);
+}
+function renameNb(i){
+  renIx=i;renInput.value=db.notes[i].title;
+  renModal.classList.remove('hide');SFX.open();
+  setTimeout(()=>{renInput.focus();renInput.select();},150);
+}
+let renIx=null;
+function closeRen(){renModal.classList.add('hide');renIx=null;}
+renSave.onclick=()=>{
+  if(renIx===null)return;
+  const t=renInput.value.trim();
+  if(!t){SFX.error();toast('⚠️ Title cannot be empty.');return;}
+  db.notes[renIx].title=t;db.notes[renIx].date=todayKey();
+  save();renderNotes();closeRen();SFX.add();toast('✏️ Renamed to "'+t+'"');
+};
+renCancel.onclick=()=>{closeRen();SFX.back();};
+renModal.addEventListener('click',e=>{if(e.target===renModal){closeRen();SFX.back();}});
+renInput.addEventListener('keydown',e=>{if(e.key==='Enter')renSave.click();});
+
+nbAdd.onclick=()=>{
+  const t=nbName.value.trim();
+  if(!t){SFX.error();toast('⚠️ Enter a note title.');return;}
+  db.notes.push({title:t,body:'',icon:ICONS[db.notes.length%ICONS.length],date:todayKey()});
+  nbName.value='';save();renderNotes();SFX.add();toast('📒 Note "'+t+'" created');
+};
+nbName.addEventListener('keydown',e=>{if(e.key==='Enter')nbAdd.click();});
+
+function openNb(i){
+  nbCur=i;const n=db.notes[i];
+  nbTitleIn.value=n.title;nbBody.value=n.body||'';
+  nbMeta.textContent=n.date?('Last edited: '+jal(n.date,{day:'numeric',month:'long',year:'numeric'})):'';
+  hideEl(nbList);show(nbEditor);SFX.open();scrollTo(0,0);
+}
+function flashSaved(){nbSaved.classList.add('on');clearTimeout(flashSaved.t);
+  flashSaved.t=setTimeout(()=>nbSaved.classList.remove('on'),1200);}
+function saveNb(){
+  if(nbCur===null)return;
+  const n=db.notes[nbCur];
+  n.title=nbTitleIn.value.trim()||'Untitled';
+  n.body=nbBody.value;n.date=todayKey();
+  save();flashSaved();
+}
+let nbT;
+[nbTitleIn,nbBody].forEach(el=>el.addEventListener('input',()=>{clearTimeout(nbT);nbT=setTimeout(saveNb,400);}));
+nbBack.onclick=()=>{saveNb();nbCur=null;hideEl(nbEditor);show(nbList);renderNotes();SFX.back();};
+let delArmed=false;
+nbDel.onclick=()=>{
+  if(nbCur===null)return;
+  if(!delArmed){delArmed=true;nbDel.textContent='🗑 Tap again to confirm';SFX.error();
+    clearTimeout(nbDel.t);nbDel.t=setTimeout(()=>{delArmed=false;nbDel.textContent='🗑 Delete note';},3200);return;}
+  const t=db.notes[nbCur].title;
+  db.notes.splice(nbCur,1);nbCur=null;delArmed=false;nbDel.textContent='🗑 Delete note';save();
+  hideEl(nbEditor);show(nbList);renderNotes();SFX.delete();toast('🗑 Deleted "'+t+'"');
+};
+
 
 tick();setInterval(tick,1000);renderWeek();
 </script>
