@@ -838,7 +838,6 @@ function renderRepDay(){
       </div>
       <div class="mdots">${dots}</div>
       ${+e.pr?`<div class="rq" style="margin-top:4px">🏅 Record: ${e.pr} ${isFail(e)?'reps':UNITS[unitOf(e)]}${e.prDate?' • '+jal(e.prDate,{day:'numeric',month:'short',year:'numeric'}):''}</div>`:''}
-      ${e.note?`<div class="rq" style="margin-top:4px">📝 ${esc(e.note.slice(0,120))}</div>`:''}
     </div>`;
   }).join('');
   const pct=ts?Math.round(ds/ts*100):0;
