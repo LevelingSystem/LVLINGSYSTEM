@@ -263,6 +263,37 @@
   .mdots{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
   .mdot{width:15px;height:15px;border-radius:5px;background:var(--fld);border:1.5px solid var(--line)}
   .mdot.on{background:var(--btn);border-color:var(--btn)}
+
+  /* ===== timers ===== */
+  #restBar{position:fixed;left:50%;transform:translateX(-50%) translateY(150%);
+    bottom:calc(16px + env(safe-area-inset-bottom));z-index:190;width:min(420px,92vw);
+    background:var(--card);border:1px solid var(--btn);border-radius:16px;padding:12px 14px;
+    box-shadow:0 10px 30px var(--shadow);transition:transform .28s cubic-bezier(.2,1.1,.4,1)}
+  #restBar.show{transform:translateX(-50%) translateY(0)}
+  #restBar .rt{display:flex;align-items:center;gap:12px}
+  #restNum{font-size:26px;font-weight:bold;color:var(--btn);min-width:66px;text-align:center;
+    font-variant-numeric:tabular-nums}
+  #restBar .rl{flex:1;min-width:0}
+  #restBar .rl b{font-size:13px;display:block}
+  #restBar .rl span{font-size:11px;color:var(--muted)}
+  #restTrack{height:6px;background:var(--fld);border-radius:99px;overflow:hidden;margin-top:9px}
+  #restTrack i{display:block;height:100%;background:var(--btn);transition:width 1s linear}
+  #restBar .rbtns{display:flex;gap:6px}
+  #restBar .rbtns button{padding:7px 10px;font-size:12px;min-height:38px}
+  .timerbtn{background:var(--ghost);color:var(--txt);border:1px solid var(--line);
+    font-size:11px;padding:5px 9px;border-radius:8px;font-weight:normal;min-height:34px}
+  .timerbtn.run{background:var(--btn);color:var(--btnTxt);border-color:var(--btn)}
+
+  .badges{display:flex;gap:7px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+  .badge2{width:48px;padding:7px 2px;border-radius:11px;background:var(--fld);border:1px solid var(--line);
+    text-align:center;opacity:.35;filter:grayscale(1)}
+  .badge2.got{opacity:1;filter:none;border-color:var(--btn)}
+  .bic{font-size:18px;line-height:1}
+  .bn{font-size:9.5px;color:var(--muted);margin-top:3px}
+
+  .spark{display:flex;align-items:flex-end;gap:3px;height:30px;margin-top:7px}
+  .spark i{flex:1;max-width:16px;background:var(--btn);border-radius:3px 3px 0 0;min-height:3px;opacity:.8}
+  .spark i:last-child{opacity:1}
 </style>
 </head>
 <body>
@@ -280,7 +311,8 @@
   <div id="weekView">
     <div class="days" id="days"></div>
     <div class="card" style="margin-top:14px"><div class="stats" id="stats" style="grid-template-columns:1fr 1fr"></div>
-      <div id="streakHint" style="font-size:12px;color:var(--muted);text-align:center;margin-top:10px"></div></div>
+      <div id="streakHint" style="font-size:12px;color:var(--muted);text-align:center;margin-top:10px"></div>
+      <div class="badges" id="badgeRow"></div></div>
   </div>
 
   <!-- ===== Weekly report ===== -->
@@ -312,6 +344,9 @@
       <input id="nbName" placeholder="Note title (e.g. Rules, Life, Diet)" style="flex:1;min-width:170px">
       <button id="nbAdd">➕ Add note</button>
     </div>
+    <div class="card row">
+      <input id="nbSearch" placeholder="🔎 Search notes…" style="flex:1">
+    </div>
     <div class="nbgrid" id="nbGrid"></div>
   </div>
 
@@ -339,13 +374,26 @@
     </div>
 
     <div class="card">
+      <div class="sechead">⏱ Rest timer</div>
+      <div class="secnote">Automatically starts after you check off a set (except the last one of an exercise).</div>
+      <div class="row" id="restOpts"></div>
+    </div>
+
+    <div class="card">
+      <div class="sechead">⏳ Catch-up window</div>
+      <div class="secnote">If you forget to tick your sets before midnight, you can still complete yesterday's workout until 12:00 the next day — so a real workout never breaks your streak.</div>
+      <button class="ghost" id="graceBtn" data-nosfx="1" style="width:100%">⏳ Catch-up: On</button>
+    </div>
+
+    <div class="card">
       <div class="sechead">🔊 Sound</div>
       <button class="ghost" id="soundBtn" data-nosfx="1" style="width:100%">🔊 Sound: On</button>
     </div>
 
     <div class="card">
       <div class="sechead">💾 Backup</div>
-      <div class="secnote">Your data is stored in this browser only. Export a file to keep a backup or move it to another device.</div>
+      <div class="secnote">Your data is stored in this browser only. Clearing site data or switching browsers will erase it.</div>
+      <div class="secnote" id="backupInfo" style="font-weight:bold"></div>
       <div class="row">
         <button class="ghost" id="exportBtn" style="flex:1">📤 Export</button>
         <button class="ghost" id="importBtn" style="flex:1">📥 Import</button>
@@ -387,12 +435,32 @@
         <button id="addBtn">➕ Add</button>
       </div>
     </div>
+    <div class="card" id="copyCard">
+      <div class="row" style="gap:8px">
+        <span style="font-size:12px;color:var(--muted)">Copy exercises from:</span>
+        <select id="copyFrom" style="flex:1;min-width:120px"></select>
+        <button class="ghost" id="copyBtn">📋 Copy</button>
+      </div>
+    </div>
+
     <div class="card">
       <div id="exList"></div>
       <div class="empty" id="empty">No exercises added for this day yet.</div>
     </div>
     <div class="card"><div class="stats" id="dayStats"></div></div>
   </div>
+</div>
+
+<div id="restBar">
+  <div class="rt">
+    <div id="restNum">0:00</div>
+    <div class="rl"><b id="restLabel">Rest</b><span id="restSub"></span></div>
+    <div class="rbtns">
+      <button class="ghost" id="restPlus" data-nosfx="1">+30s</button>
+      <button class="ghost" id="restStop" data-nosfx="1">✕</button>
+    </div>
+  </div>
+  <div id="restTrack"><i style="width:100%"></i></div>
 </div>
 
 <div id="toast"></div>
@@ -462,6 +530,9 @@ document.addEventListener('pointerdown',e=>{
 
 const KEY='workout_program_v3';
 let db=JSON.parse(localStorage.getItem(KEY)||'null')||{plan:[[],[],[],[],[],[],[]],log:{}};
+if(!db.snap)db.snap={};      // frozen copy of the plan for each logged day
+if(!db.prs)db.prs={};        // record history: exName -> [{v,date}]
+if(!db.notes)db.notes=[];
 const save=()=>localStorage.setItem(KEY,JSON.stringify(db));
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const uid=()=>Math.random().toString(36).slice(2,9);
@@ -475,7 +546,8 @@ const todayKey=()=>{const p=iranNow();return `${p.year}-${p.month}-${p.day}`;};
 const toUTC=k=>{const[a,b,c]=k.split('-').map(Number);return new Date(Date.UTC(a,b-1,c,12));};
 const fmt=(k,o)=>new Intl.DateTimeFormat('en-US',Object.assign({timeZone:'UTC'},o)).format(toUTC(k));
 // Persian (Jalali) calendar, Latin numerals
-const jal=(k,o)=>new Intl.DateTimeFormat('en-u-ca-persian-nu-latn',Object.assign({timeZone:'UTC'},o)).format(toUTC(k));
+const jal=(k,o)=>new Intl.DateTimeFormat('en-u-ca-persian-nu-latn',Object.assign({timeZone:'UTC'},o))
+  .format(toUTC(k)).replace(/\s*AP\b/,'');
 // Saturday = 0 ... Friday = 6 (Iranian week)
 const wdToday=()=>(toUTC(todayKey()).getUTCDay()+1)%7;
 const NAMES=['Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday','Friday'];
@@ -483,14 +555,25 @@ const NAMES=['Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday','Frid
 let current=null;
 const plan=i=>db.plan[i]||(db.plan[i]=[]);
 const logToday=()=>db.log[todayKey()]||(db.log[todayKey()]={});
-function setsOf(id,n){
-  const L=db.log[todayKey()]||{};
+const logFor=k=>db.log[k]||(db.log[k]={});
+/* The day a tap writes to. Normally today; until 12:00 you may still complete
+   yesterday's workout if you forgot to tick it before going to sleep. */
+const GKEY='workout_grace';
+const graceOn=()=>localStorage.getItem(GKEY)!=='0';
+function targetKey(wd){
+  if(wd===wdToday())return todayKey();
+  const y=shiftKey(todayKey(),-1);
+  if(graceOn()&&wd===wdOf(y)&&+iranNow().hour<12)return y;
+  return null;
+}
+function setsOf(id,n,key){
+  const L=db.log[key||todayKey()]||{};
   let a=L[id];
   if(!Array.isArray(a)) a = a===true?Array(n).fill(true):[];
   a=a.slice(0,n); while(a.length<n)a.push(false);
   return a;
 }
-const doneSets=(id,n)=>setsOf(id,n).filter(Boolean).length;
+const doneSets=(id,n,key)=>setsOf(id,n,key).filter(Boolean).length;
 function best(name){let b=0;db.plan.flat().forEach(e=>{if(e.name.trim()===name.trim())
   b=Math.max(b,+e.pr||0);});return b;}
 
@@ -510,10 +593,22 @@ const unitOpts=u=>Object.entries(UNITS).map(([k,v])=>
 /* ===== Streaks ===== */
 const shiftKey=(k,n)=>{const d=toUTC(k);d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);};
 const wdOf=k=>(toUTC(k).getUTCDay()+1)%7;
+
+/* ===== Plan snapshots =====
+   Past days must report what was ACTUALLY planned that day, not today's edited plan. */
+function planFor(k){
+  if(db.snap&&db.snap[k])return db.snap[k];
+  return db.plan[wdOf(k)]||[];
+}
+function freezeDay(k){        // called the first time a set is ticked on day k
+  if(!db.snap)db.snap={};
+  if(db.snap[k])return;
+  db.snap[k]=JSON.parse(JSON.stringify(db.plan[wdOf(k)]||[]));
+}
 // A day counts for the streak ONLY if every set of every exercise planned for that weekday is checked.
 function dayDone(k){
   const L=db.log[k]; if(!L)return false;
-  const items=db.plan[wdOf(k)]||[];
+  const items=planFor(k);
   if(!items.length)return false;                 // rest day / empty plan -> not a streak day
   return items.every(e=>{
     const n=+e.sets||1, a=L[e.id];
@@ -541,16 +636,17 @@ function renderWeek(){
   days.innerHTML='';
   for(let i=0;i<7;i++){
     const items=plan(i), isT=i===t;
+    const gk=targetKey(i), isGrace=!!gk&&gk!==todayKey();
     const totSets=items.reduce((s,e)=>s+(+e.sets||1),0);
-    const done=isT?items.reduce((s,e)=>s+doneSets(e.id,+e.sets||1),0):0;
-    const pct=isT&&totSets?Math.round(done/totSets*100):0;
+    const done=(isT||isGrace)?items.reduce((s,e)=>s+doneSets(e.id,+e.sets||1,gk||todayKey()),0):0;
+    const pct=(isT||isGrace)&&totSets?Math.round(done/totSets*100):0;
     const el=document.createElement('div');
     el.className='day'+(isT?' today':'');
     el.innerHTML=`<span class="tag ${isT?'t':'l'}">${isT?'Today ✔':'🔒 No check'}</span>
       <div class="n">Day ${i+1}</div>
       <div class="d">${NAMES[i]}</div>
       <div class="p"><i style="width:${pct}%"></i></div>
-      <div class="c">${items.length?(isT?`${done} of ${totSets} sets done (${pct}%)`:`${items.length} exercises • ${totSets} sets`):'No exercises'}</div>`;
+      <div class="c">${items.length?((isT||isGrace)?`${done} of ${totSets} sets done (${pct}%)`:`${items.length} exercises • ${totSets} sets`):'No exercises'}</div>`;
     el.onclick=()=>openDay(i);
     days.appendChild(el);
   }
@@ -559,28 +655,37 @@ function renderWeek(){
     <div class="stat"><b>${st.cur}🔥</b><span>Current streak (days)</span></div>
     <div class="stat"><b>${st.best}🏆</b><span>Best streak (days)</span></div>`;
   const it=plan(t), ts=it.reduce((a,e)=>a+(+e.sets||1),0),
-        ds=it.reduce((a,e)=>a+doneSets(e.id,+e.sets||1),0);
+        ds=it.reduce((a,e)=>a+doneSets(e.id,+e.sets||1,todayKey()),0);
+  renderBadges();
   streakHint.innerHTML = !it.length
     ? 'No exercises planned for today — add some to keep your streak alive.'
     : (ds>=ts ? '✅ Today is complete — streak counted!'
               : `⚡ ${ts-ds} more set${ts-ds>1?'s':''} today to extend your streak.`);
 }
 
-function openDay(i){SFX.open();current=i;weekView.classList.add('hide');dayView.classList.remove('hide');renderDay();scrollTo(0,0);}
+function fillCopy(){
+  copyFrom.innerHTML=NAMES.map((n,i)=>i===current?'':
+    `<option value="${i}">Day ${i+1} — ${n} (${(db.plan[i]||[]).length})</option>`).join('');
+}
+function openDay(i){SFX.open();current=i;weekView.classList.add('hide');dayView.classList.remove('hide');fillCopy();renderDay();scrollTo(0,0);}
 backBtn.onclick=()=>{SFX.back();current=null;dayView.classList.add('hide');weekView.classList.remove('hide');renderWeek();};
 
 function renderDay(){
-  const i=current, isT=i===wdToday(), items=plan(i);
+  const i=current, items=plan(i);
+  const tk=targetKey(i), isT=!!tk, isGrace=isT&&tk!==todayKey();
   dayTitle.textContent=`Day ${i+1} — ${NAMES[i]}`;
-  dayTag.innerHTML=isT?'<span class="tag t">Today</span>':'<span class="tag l">🔒 Check-off disabled</span>';
-  lockMsg.innerHTML=isT
+  dayTag.innerHTML=isGrace?'<span class="tag l">⏳ Catch-up</span>'
+    :(isT?'<span class="tag t">Today</span>':'<span class="tag l">🔒 Check-off disabled</span>');
+  lockMsg.innerHTML=isGrace
+    ? '<div class="notice">⏳ Catch-up window: you can still complete yesterday\'s workout until 12:00 today.</div>'
+    : (isT
     ? '<div class="notice ok">This is today ✔ you can check off your sets.</div>'
-    : '<div class="notice">You can add or edit exercises here, but checking off sets is only possible on the current day (Iran time).</div>';
+    : '<div class="notice">You can add or edit exercises here, but checking off sets is only possible on the current day (Iran time).</div>');
   exList.innerHTML='';
   empty.style.display=items.length?'none':'block';
   items.forEach((e,ix)=>{
     const ns=+e.sets||1, tot=(+e.count||0)*ns;
-    const arr=setsOf(e.id,ns), dn=arr.filter(Boolean).length, full=isT&&dn===ns;
+    const arr=setsOf(e.id,ns,tk), dn=arr.filter(Boolean).length, full=isT&&dn===ns;
     const chips=arr.map((v,si)=>
       `<div class="set ${isT&&v?'on':''} ${isT?'':'off'}" data-ex="${ix}" data-set="${si}"
         title="Set ${si+1}">${isT&&v?'✔':''} ${si+1}</div>`).join('');
@@ -598,18 +703,26 @@ function renderDay(){
         <input type="number" inputmode="numeric" min="0" value="${pr||''}" placeholder="—" style="width:70px" data-i="${ix}" data-f="pr" title="Personal best">
         <span class="unit">${isFail(e)?'reps (best attempt)':UNITS[unitOf(e)]}</span>
         ${e.prDate?`<span class="recdate">📅 ${jal(e.prDate,{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
+        ${(()=>{const h=(db.prs||{})[e.name.trim()]||[];
+          if(h.length<2)return '';
+          const prev=h[h.length-2].v, cur=h[h.length-1].v, up=cur-prev;
+          return `<span class="recdate" title="Previous: ${prev}">${up>0?'▲':'▼'} ${Math.abs(up)} from ${prev}</span>`;})()}
       </div>
+      ${(!isFail(e)&&(unitOf(e)==='sec'||unitOf(e)==='min'))?
+        `<div style="margin-top:7px"><button class="timerbtn" data-timer="${ix}">▶ Start ${e.count} ${UNITS[unitOf(e)]} timer</button></div>`:''}
       <div class="exrow">
         <div class="fld ${isFail(e)?'dim':''}"><label>Amount</label><input type="number" inputmode="numeric" min="0" value="${e.count}" data-i="${ix}" data-f="count" ${isFail(e)?'disabled':''}></div>
         <div class="fld"><label>Unit</label><select data-i="${ix}" data-f="unit">${unitOpts(unitOf(e))}</select></div>
         <div class="fld"><label>Sets</label><input type="number" inputmode="numeric" min="1" value="${ns}" data-i="${ix}" data-f="sets"></div>
         <span class="spacer"></span>
+        <button class="timerbtn" data-mv="${ix}" data-dir="-1" ${ix===0?'disabled':''} title="Move up">▲</button>
+        <button class="timerbtn" data-mv="${ix}" data-dir="1" ${ix===items.length-1?'disabled':''} title="Move down">▼</button>
         <button class="danger" data-del="${ix}">🗑 Delete</button>
       </div></div>`;
     exList.appendChild(row);
   });
   const totSets=items.reduce((s,e)=>s+(+e.sets||1),0);
-  const done=isT?items.reduce((s,e)=>s+doneSets(e.id,+e.sets||1),0):0;
+  const done=isT?items.reduce((s,e)=>s+doneSets(e.id,+e.sets||1,tk),0):0;
   const tot=items.reduce((s,e)=>s+(+e.count||0)*(+e.sets||1),0);
   dayStats.innerHTML=`<div class="stat"><b>${items.length}</b><span>Exercises</span></div>
     <div class="stat"><b>${totSets}</b><span>Total sets</span></div>
@@ -634,15 +747,30 @@ exCount.addEventListener('keydown',e=>{if(e.key==='Enter')addBtn.click();});
 exList.addEventListener('click',e=>{
   const inf=e.target.closest('.info');
   if(inf){openNote(+inf.dataset.note);return;}
+  const tb=e.target.closest('[data-timer]');
+  if(tb){const ex=plan(current)[+tb.dataset.timer];
+    const secs=unitOf(ex)==='min'?(+ex.count||0)*60:(+ex.count||0);
+    if(secs>0){startTimer(secs,ex.name,'Exercise timer','ex');SFX.check();}
+    return;}
+  const mv=e.target.closest('[data-mv]');
+  if(mv){const a=+mv.dataset.mv,b=a+ +mv.dataset.dir,L=plan(current);
+    if(b<0||b>=L.length)return;
+    [L[a],L[b]]=[L[b],L[a]];save();renderDay();SFX.click();return;}
   const t=e.target.closest('.set'), d=e.target.dataset.del;
   if(t){
-    if(current!==wdToday()){SFX.error();toast('🔒 You can only check off sets on today (Iran time).');return;}
+    const tk=targetKey(current);
+    if(!tk){SFX.error();toast('🔒 You can only check off sets on today (Iran time).');return;}
     const ex=plan(current)[+t.dataset.ex], ns=+ex.sets||1, si=+t.dataset.set;
-    const L=logToday(), arr=setsOf(ex.id,ns);
+    const L=logFor(tk), arr=setsOf(ex.id,ns,tk);
+    freezeDay(tk);
     arr[si]=!arr[si]; L[ex.id]=arr; save(); renderDay();
+    if(arr[si]&&restLen>0&&tk===todayKey()){
+      const n2=+ex.sets||1, d2=arr.filter(Boolean).length;
+      if(d2<n2) startTimer(restLen,'Rest — '+ex.name,`Set ${d2} of ${n2} done`,'rest');
+    }
     if(arr[si]){
       const items=plan(current);
-      const allDone=items.every(x=>{const n=+x.sets||1;return doneSets(x.id,n)>=n;});
+      const allDone=items.every(x=>{const n=+x.sets||1;return doneSets(x.id,n,tk)>=n;});
       if(allDone){SFX.record();if(navigator.vibrate)navigator.vibrate([25,60,25,60,45]);
         setTimeout(()=>toast('🔥 Day complete! Streak: '+streaks().cur+' day(s)'),80);}
       else arr.every(Boolean)?SFX.complete():SFX.check();
@@ -668,6 +796,9 @@ exList.addEventListener('change',e=>{
   if(e.target.dataset.f==='pr'){
     const ex=plan(current)[e.target.dataset.i], now=+ex.pr||0, was=prBefore||0;
     if(now>was){
+      if(!db.prs)db.prs={};
+      const h=db.prs[ex.name.trim()]=db.prs[ex.name.trim()]||[];
+      if(!h.length||h[h.length-1].v!==now){h.push({v:now,date:todayKey()});save();}
       SFX.record(); if(navigator.vibrate)navigator.vibrate([20,50,20,50,40]);
       toast(`🏅 New record for ${ex.name}: ${now} ${isFail(ex)?'reps':UNITS[unitOf(ex)]} (was ${was||'—'})`);
     }
@@ -677,15 +808,23 @@ exList.addEventListener('change',e=>{
 });
 
 exportBtn.onclick=()=>{const b=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='workout-plan.json';a.click();};
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='workout-'+todayKey()+'.json';a.click();markBackup();SFX.add();toast('📤 Backup exported');};
 importBtn.onclick=()=>fileIn.click();
 fileIn.onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();
-  r.onload=()=>{try{const o=JSON.parse(r.result);if(!o.plan)throw 0;db=o;if(!db.notes)db.notes=[];save();renderWeek();renderNotes();}catch{toast('⚠️ Invalid file');}};
+  r.onload=()=>{try{const o=JSON.parse(r.result);if(!o.plan)throw 0;db=o;if(!db.notes)db.notes=[];if(!db.snap)db.snap={};if(!db.prs)db.prs={};save();renderWeek();renderNotes();}catch{toast('⚠️ Invalid file');}};
   r.readAsText(f);};
 
 soundBtn.onclick=()=>{soundOn=!soundOn;localStorage.setItem(SKEY,soundOn?'1':'0');
   soundBtn.textContent=soundOn?'🔊 Sound: On':'🔇 Sound: Off';if(soundOn)SFX.check();};
 soundBtn.textContent=soundOn?'🔊 Sound: On':'🔇 Sound: Off';
+
+copyBtn.onclick=()=>{
+  const src=+copyFrom.value; if(isNaN(src))return;
+  const from=db.plan[src]||[];
+  if(!from.length){SFX.error();toast('⚠️ That day has no exercises.');return;}
+  from.forEach(e=>plan(current).push(Object.assign({},e,{id:uid()})));
+  save();renderDay();SFX.add();toast(`📋 Copied ${from.length} exercise${from.length>1?'s':''} from ${NAMES[src]}`);
+};
 
 /* ===== notes modal ===== */
 let noteIx=null;
@@ -730,7 +869,7 @@ function switchTab(t){
   if(t==='w'){show(weekView);renderWeek();}
   else if(t==='n'){show(nbList);renderNotes();}
   else if(t==='r'){show(repView);repOffset=0;renderReport();}
-  else {show(setView);renderThemes();}
+  else {show(setView);renderThemes();renderRest();paintBackup();}
   SFX.click();scrollTo(0,0);
 }
 tabWorkout.onclick=()=>switchTab('w');
@@ -738,6 +877,95 @@ tabNotes.onclick=()=>switchTab('n');
 tabSettings.onclick=()=>switchTab('s');
 tabReport.onclick=()=>switchTab('r');
 
+
+
+
+/* ===== Offline support (PWA) =====
+   The whole app is a single file, so we cache this document itself. */
+(function(){
+  try{
+    const mf=new Blob(["{\"name\":\"Weekly Workout Tracker\",\"short_name\":\"Workout\",\"start_url\":\".\",\"display\":\"standalone\",\"background_color\":\"#0e1117\",\"theme_color\":\"#0e1117\",\"icons\":[{\"src\":\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230e1117'/%3E%3Cg fill='%234ade80'%3E%3Crect x='26' y='28' width='12' height='8' rx='2'/%3E%3Crect x='18' y='24' width='7' height='16' rx='2.5'/%3E%3Crect x='39' y='24' width='7' height='16' rx='2.5'/%3E%3Crect x='11' y='28' width='6' height='8' rx='2.5'/%3E%3Crect x='47' y='28' width='6' height='8' rx='2.5'/%3E%3C/g%3E%3C/svg%3E\",\"sizes\":\"any\",\"type\":\"image/svg+xml\",\"purpose\":\"any maskable\"}]}"],{type:'application/manifest+json'});
+    const l=document.createElement('link');
+    l.rel='manifest';l.href=URL.createObjectURL(mf);
+    document.head.appendChild(l);
+  }catch(e){}
+
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+    const swCode=`
+      const C='workout-v1';
+      self.addEventListener('install',e=>{self.skipWaiting();
+        e.waitUntil(caches.open(C).then(c=>c.addAll(['./','./index.html']).catch(()=>{})));});
+      self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
+      self.addEventListener('fetch',e=>{
+        if(e.request.method!=='GET')return;
+        e.respondWith(
+          fetch(e.request).then(r=>{
+            const cp=r.clone();
+            caches.open(C).then(c=>c.put(e.request,cp)).catch(()=>{});
+            return r;
+          }).catch(()=>caches.match(e.request).then(r=>r||caches.match('./')))
+        );
+      });`;
+    const url=URL.createObjectURL(new Blob([swCode],{type:'text/javascript'}));
+    navigator.serviceWorker.register(url).catch(()=>{});
+  }
+})();
+
+/* ===== Rest / exercise timer ===== */
+const RKEY='workout_rest_len';
+let restLen=+localStorage.getItem(RKEY)||60;
+let rt={id:null,left:0,total:0,mode:'rest'};
+const mmss=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+function startTimer(sec,label,sub,mode){
+  stopTimer(true);
+  rt={id:null,left:sec,total:sec,mode:mode||'rest'};
+  restLabel.textContent=label; restSub.textContent=sub||'';
+  restBar.classList.add('show');
+  paintTimer();
+  rt.id=setInterval(()=>{
+    rt.left--;
+    if(rt.left<=0){
+      paintTimer();
+      finishTimer();
+      return;
+    }
+    if(rt.left<=3)beep(880,0.09,'sine',0.14);
+    paintTimer();
+  },1000);
+}
+function paintTimer(){
+  restNum.textContent=mmss(Math.max(0,rt.left));
+  restTrack.firstElementChild.style.width=(rt.total?Math.max(0,rt.left)/rt.total*100:0)+'%';
+}
+function finishTimer(){
+  clearInterval(rt.id);rt.id=null;
+  SFX.complete(); if(navigator.vibrate)navigator.vibrate([90,60,90]);
+  toast(rt.mode==='ex'?'⏱ Time is up — set finished!':'💪 Rest over — next set!');
+  setTimeout(()=>restBar.classList.remove('show'),1400);
+}
+function stopTimer(silent){
+  if(rt.id)clearInterval(rt.id);
+  rt.id=null;restBar.classList.remove('show');
+  if(!silent)SFX.back();
+}
+restStop.onclick=()=>stopTimer();
+restPlus.onclick=()=>{if(!rt.id)return;rt.left+=30;rt.total+=30;paintTimer();SFX.click();};
+
+/* ===== Achievements ===== */
+const BADGES=[
+  {d:3,  ic:'🌱', n:'3-day streak'},
+  {d:7,  ic:'⭐', n:'1 week'},
+  {d:14, ic:'🔥', n:'2 weeks'},
+  {d:30, ic:'🏅', n:'1 month'},
+  {d:60, ic:'💎', n:'2 months'},
+  {d:100,ic:'👑', n:'100 days'}
+];
+function renderBadges(){
+  const st=streaks();
+  badgeRow.innerHTML=BADGES.map(b=>
+    `<div class="badge2 ${st.best>=b.d?'got':''}" title="${b.n}">
+       <div class="bic">${b.ic}</div><div class="bn">${b.d}d</div></div>`).join('');
+}
 
 /* ===== Weekly report ===== */
 let repOffset=0;   // 0 = this week, -1 = last week...
@@ -757,7 +985,7 @@ function renderReport(){
 
   repDays.innerHTML='';
   keys.forEach((k,i)=>{
-    const items=db.plan[wdOf(k)]||[];
+    const items=planFor(k);
     const L=db.log[k]||{};
     let ts=0,ds=0;
     items.forEach(e=>{
@@ -797,12 +1025,25 @@ function renderReport(){
     <div class="wbartxt">${pct}% of this week's planned sets completed</div>`;
 
   renderRepDay();
-  const prs=db.plan.flat().filter(e=>+e.pr>0)
-    .sort((a,b)=>(+b.pr)-(+a.pr));
-  repPr.innerHTML = prs.length ? prs.map(e=>
-    `<div class="rex"><span>${esc(e.name)}</span>
-      <span class="rq">🏅 ${e.pr} ${isFail(e)?'reps':UNITS[unitOf(e)]}${e.prDate?' • '+jal(e.prDate,{day:'numeric',month:'short',year:'numeric'}):''}</span></div>`
-  ).join('') : '<div class="empty">No records saved yet.</div>';
+  const prs=db.plan.flat().filter(e=>+e.pr>0).sort((a,b)=>(+b.pr)-(+a.pr));
+  repPr.innerHTML = prs.length ? prs.map(e=>{
+    const h=(db.prs||{})[e.name.trim()]||[];
+    let spark='';
+    if(h.length>1){
+      const vals=h.map(x=>x.v), mx=Math.max(...vals), mn=Math.min(...vals);
+      spark='<div class="spark">'+vals.slice(-8).map(v=>
+        `<i style="height:${mx===mn?100:20+((v-mn)/(mx-mn))*80}%" title="${v}"></i>`).join('')+'</div>';
+    }
+    const first=h.length>1?h[0].v:null;
+    return `<div class="rex" style="display:block">
+      <div style="display:flex;justify-content:space-between;gap:10px">
+        <span>${esc(e.name)}</span>
+        <span class="rq">🏅 ${e.pr} ${isFail(e)?'reps':UNITS[unitOf(e)]}${e.prDate?' • '+jal(e.prDate,{day:'numeric',month:'short',year:'numeric'}):''}</span>
+      </div>
+      ${spark}
+      ${first!==null?`<div class="rq" style="margin-top:3px">📈 ${first} → ${e.pr} (+${e.pr-first}) over ${h.length} updates</div>`:''}
+    </div>`;
+  }).join('') : '<div class="empty">No records saved yet.</div>';
 }
 
 let repSelKey=null;
@@ -815,9 +1056,11 @@ function renderRepDay(){
   [...repDays.querySelectorAll('.rday')].forEach(el=>
     el.classList.toggle('sel', el.dataset.k===repSelKey));
 
-  const k=repSelKey, i=wdOf(k), items=db.plan[i]||[], L=db.log[k]||{};
+  const k=repSelKey, i=wdOf(k), items=planFor(k), L=db.log[k]||{};
+  const frozen=!!(db.snap&&db.snap[k]);
   repDayHead.innerHTML=`🏋️ ${NAMES[i]} — ${jal(k,{day:'numeric',month:'long',year:'numeric'})}
-    ${k===todayKey()?'<span class="tag t" style="margin-inline-start:6px">today</span>':''}`;
+    ${k===todayKey()?'<span class="tag t" style="margin-inline-start:6px">today</span>'
+      :(frozen?'<span class="tag" style="margin-inline-start:6px" title="Snapshot of the plan as it was on that day">📌 as logged</span>':'')}`;
 
   if(!items.length){
     repEx.innerHTML='<div class="empty">No exercises planned for this day.</div>';
@@ -895,18 +1138,61 @@ function renderThemes(){
 }
 applyTheme(localStorage.getItem(TKEY)||'dark');
 
+/* ===== Rest length setting ===== */
+function renderRest(){
+  const opts=[0,30,45,60,90,120,180];
+  restOpts.innerHTML=opts.map(v=>
+    `<button class="${v===restLen?'':'ghost'}" data-rest="${v}" data-nosfx="1" style="flex:1 1 60px">${v?v+'s':'Off'}</button>`).join('');
+}
+restOpts.onclick=e=>{
+  const b=e.target.closest('[data-rest]'); if(!b)return;
+  restLen=+b.dataset.rest; localStorage.setItem(RKEY,restLen);
+  renderRest(); SFX.check();
+  toast(restLen?('⏱ Rest timer set to '+restLen+'s'):'⏱ Rest timer turned off');
+};
+
+/* ===== Catch-up toggle ===== */
+function paintGrace(){graceBtn.textContent=graceOn()?'⏳ Catch-up: On (until 12:00)':'🚫 Catch-up: Off';}
+graceBtn.onclick=()=>{localStorage.setItem(GKEY,graceOn()?'0':'1');paintGrace();SFX.check();
+  toast(graceOn()?'⏳ Catch-up window enabled':'🚫 Catch-up window disabled');};
+paintGrace();
+
+/* ===== Backup reminder ===== */
+const BKEY='workout_last_backup';
+function markBackup(){localStorage.setItem(BKEY,todayKey());paintBackup();}
+function daysSinceBackup(){
+  const b=localStorage.getItem(BKEY); if(!b)return null;
+  return Math.round((toUTC(todayKey())-toUTC(b))/86400000);
+}
+function paintBackup(){
+  const d=daysSinceBackup();
+  backupInfo.textContent = d===null ? '⚠️ You have never exported a backup.'
+    : (d===0?'✅ Backed up today.':`Last backup: ${d} day${d>1?'s':''} ago.`);
+  backupInfo.style.color = (d===null||d>=7) ? 'var(--warn)' : 'var(--muted)';
+}
+function checkBackupNag(){
+  const d=daysSinceBackup();
+  const hasData=db.plan.flat().length||Object.keys(db.log).length;
+  if(!hasData)return;
+  if(d===null||d>=10){
+    const shown=sessionStorage.getItem('nag');
+    if(!shown){sessionStorage.setItem('nag','1');
+      setTimeout(()=>toast('⚠️ Export a backup — your data lives only in this browser.'),1500);}
+  }
+}
+
 /* ===== Reset ===== */
 let armLog=false,armAll=false;
 resetLog.onclick=()=>{
   if(!armLog){armLog=true;resetLog.textContent='🔄 Tap again to reset progress';SFX.error();
     clearTimeout(resetLog.t);resetLog.t=setTimeout(()=>{armLog=false;resetLog.textContent='🔄 Reset progress & streaks only';},3200);return;}
-  db.log={};armLog=false;resetLog.textContent='🔄 Reset progress & streaks only';
+  db.log={};db.snap={};armLog=false;resetLog.textContent='🔄 Reset progress & streaks only';
   save();SFX.delete();toast('🔄 Progress and streaks cleared');
 };
 resetAll.onclick=()=>{
   if(!armAll){armAll=true;resetAll.textContent='🗑 Tap again to ERASE EVERYTHING';SFX.error();
     clearTimeout(resetAll.t);resetAll.t=setTimeout(()=>{armAll=false;resetAll.textContent='🗑 Erase everything (plan, notes, records)';},3500);return;}
-  db={plan:[[],[],[],[],[],[],[]],log:{},notes:[]};
+  db={plan:[[],[],[],[],[],[],[]],log:{},snap:{},prs:{},notes:[]};
   armAll=false;resetAll.textContent='🗑 Erase everything (plan, notes, records)';
   save();SFX.delete();toast('🗑 Everything has been erased');
 };
@@ -914,7 +1200,11 @@ resetAll.onclick=()=>{
 const ICONS=['📌','📋','💡','🎯','🍎','🧠','💬','⭐','🔥','📖'];
 function renderNotes(){
   nbGrid.innerHTML='';
+  const q=(nbSearch.value||'').trim().toLowerCase();
+  let shown=0;
   db.notes.forEach((n,i)=>{
+    if(q && !((n.title||'').toLowerCase().includes(q) || (n.body||'').toLowerCase().includes(q))) return;
+    shown++;
     const el=document.createElement('div');
     el.className='nb';
     el.innerHTML=`<div class="nbact">
@@ -933,6 +1223,8 @@ function renderNotes(){
     };
     nbGrid.appendChild(el);
   });
+  if(!shown) nbGrid.innerHTML=`<div class="empty" style="grid-column:1/-1">${
+    q?'No notes match your search.':'No notes yet — add one above.'}</div>`;
 }
 
 let pendingDel=null;
@@ -970,6 +1262,7 @@ nbAdd.onclick=()=>{
   nbName.value='';save();renderNotes();SFX.add();toast('📒 Note "'+t+'" created');
 };
 nbName.addEventListener('keydown',e=>{if(e.key==='Enter')nbAdd.click();});
+nbSearch.addEventListener('input',renderNotes);
 
 function openNb(i){
   nbCur=i;const n=db.notes[i];
@@ -1000,7 +1293,7 @@ nbDel.onclick=()=>{
 };
 
 
-tick();setInterval(tick,1000);renderWeek();
+tick();setInterval(tick,1000);renderWeek();checkBackupNag();
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3cbd7784b9c0a3c',t:'MTc4OTY4NzIyOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
