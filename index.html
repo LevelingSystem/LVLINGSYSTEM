@@ -149,6 +149,13 @@
   #toast.warn{background:var(--warn)}
   #toast.info{background:var(--accent2)}
   #toast.show{transform:translateX(-50%) translateY(0)}
+
+  select{font-family:inherit;font-size:15px;border-radius:10px;border:1px solid var(--line);
+    background:#0f131a;color:var(--txt);padding:10px 8px;outline:none;min-height:44px}
+  select:focus{border-color:var(--accent2)}
+  .fld select{border:none;background:transparent;padding:6px 2px;min-height:0;font-size:14px}
+  .amrap{color:var(--warn);font-weight:bold}
+  .fld.dim{opacity:.35}
 </style>
 </head>
 <body>
@@ -181,7 +188,16 @@
       <div id="lockMsg"></div>
       <div class="row">
         <input id="exName" placeholder="Exercise name (e.g. Push-ups)" style="flex:1;min-width:180px">
-        <input id="exCount" type="number" inputmode="numeric" min="0" placeholder="Reps" style="width:95px">
+        <input id="exCount" type="number" inputmode="numeric" min="0" placeholder="Amount" style="width:95px">
+        <select id="exUnit" title="Unit">
+          <option value="reps">reps</option>
+          <option value="sec">seconds</option>
+          <option value="min">minutes</option>
+          <option value="m">meters</option>
+          <option value="km">km</option>
+          <option value="kg">kg</option>
+          <option value="failure">to failure</option>
+        </select>
         <input id="exSets" type="number" inputmode="numeric" min="1" value="1" placeholder="Sets" style="width:85px">
         <button id="addBtn">➕ Add</button>
       </div>
@@ -281,6 +297,18 @@ function best(name){let b=0;db.plan.flat().forEach(e=>{if(e.name.trim()===name.t
   b=Math.max(b,+e.pr||0);});return b;}
 
 
+
+/* ===== units ===== */
+const UNITS={reps:'reps',sec:'sec',min:'min',m:'m',km:'km',kg:'kg',failure:'to failure'};
+const unitOf=e=>UNITS[e.unit]?e.unit:'reps';
+const isFail=e=>unitOf(e)==='failure';
+function amount(e){ // human readable amount for one set
+  if(isFail(e))return '<span class="amrap">to failure 💪</span>';
+  return `${e.count} ${UNITS[unitOf(e)]}`;
+}
+const unitOpts=u=>Object.entries(UNITS).map(([k,v])=>
+  `<option value="${k}" ${u===k?'selected':''}>${v}</option>`).join('');
+
 /* ===== Streaks ===== */
 const shiftKey=(k,n)=>{const d=toUTC(k);d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);};
 const wdOf=k=>(toUTC(k).getUTCDay()+1)%7;
@@ -364,17 +392,18 @@ function renderDay(){
     row.innerHTML=`<div class="nm">
       <div class="nmline"><b>${esc(e.name)}</b>
         <span class="info ${e.note?'has':''}" data-note="${ix}" title="Notes">${e.note?'📝':'ℹ️'}</span></div>
-      <span>${e.count} reps × ${ns} sets = <b style="color:var(--accent2)">${tot}</b>
+      <span>${amount(e)} × ${ns} set${ns>1?'s':''}${isFail(e)?'':` = <b style="color:var(--accent2)">${tot} ${UNITS[unitOf(e)]}</b>`}
       ${isT?` • <b style="color:var(--accent)">${dn}/${ns} sets</b>`:''}</span>
       <div class="sets">${chips}</div>
       <div class="recbox">
         <span class="reclbl">🏅 Record:</span>
         <input type="number" inputmode="numeric" min="0" value="${pr||''}" placeholder="—" style="width:70px" data-i="${ix}" data-f="pr" title="Personal best">
-        <span class="unit">reps</span>
+        <span class="unit">${isFail(e)?'reps (best attempt)':UNITS[unitOf(e)]}</span>
         ${e.prDate?`<span class="recdate">📅 ${jal(e.prDate,{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
       </div>
       <div class="exrow">
-        <div class="fld"><label>Reps</label><input type="number" inputmode="numeric" min="0" value="${e.count}" data-i="${ix}" data-f="count"></div>
+        <div class="fld ${isFail(e)?'dim':''}"><label>Amount</label><input type="number" inputmode="numeric" min="0" value="${e.count}" data-i="${ix}" data-f="count" ${isFail(e)?'disabled':''}></div>
+        <div class="fld"><label>Unit</label><select data-i="${ix}" data-f="unit">${unitOpts(unitOf(e))}</select></div>
         <div class="fld"><label>Sets</label><input type="number" inputmode="numeric" min="1" value="${ns}" data-i="${ix}" data-f="sets"></div>
         <span class="spacer"></span>
         <button class="danger" data-del="${ix}">🗑 Delete</button>
@@ -386,18 +415,21 @@ function renderDay(){
   const tot=items.reduce((s,e)=>s+(+e.count||0)*(+e.sets||1),0);
   dayStats.innerHTML=`<div class="stat"><b>${items.length}</b><span>Exercises</span></div>
     <div class="stat"><b>${totSets}</b><span>Total sets</span></div>
-    <div class="stat"><b>${tot}</b><span>Total reps</span></div>
+    <div class="stat"><b>${tot}</b><span>Total volume</span></div>
     <div class="stat"><b>${isT?done:'—'}</b><span>Sets done</span></div>
     <div class="stat"><b>${isT&&totSets?Math.round(done/totSets*100)+'%':'—'}</b><span>Progress</span></div>
     <div class="stat"><b>${Math.max(0,...items.map(e=>+e.pr||0))}</b><span>Best record</span></div>`;
 }
 
 addBtn.onclick=()=>{
-  const n=exName.value.trim(),c=+exCount.value,s=+exSets.value||1;
-  if(!n||!c){SFX.error();toast('⚠️ Enter an exercise name and reps.');return;}
-  plan(current).push({id:uid(),name:n,count:c,sets:s,pr:0,prDate:'',note:''});
+  const n=exName.value.trim(),u=exUnit.value,c=u==='failure'?0:+exCount.value,s=+exSets.value||1;
+  if(!n){SFX.error();toast('⚠️ Enter an exercise name.');return;}
+  if(u!=='failure'&&!c){SFX.error();toast('⚠️ Enter an amount (or choose "to failure").');return;}
+  plan(current).push({id:uid(),name:n,count:c,unit:u,sets:s,pr:0,prDate:'',note:''});
   exName.value='';exCount.value='';exSets.value=1;save();renderDay();exName.focus();SFX.add();
 };
+exUnit.onchange=()=>{const f=exUnit.value==='failure';
+  exCount.disabled=f;exCount.style.opacity=f?.4:1;exCount.placeholder=f?'—':'Amount';};
 exName.addEventListener('keydown',e=>{if(e.key==='Enter')exCount.focus();});
 exCount.addEventListener('keydown',e=>{if(e.key==='Enter')addBtn.click();});
 
@@ -429,6 +461,7 @@ exList.addEventListener('focusin',e=>{
 exList.addEventListener('input',e=>{
   const i=e.target.dataset.i;if(i===undefined)return;
   const ex=plan(current)[i], f=e.target.dataset.f;
+  if(f==='unit'){ex.unit=e.target.value;if(ex.unit==='failure')ex.count=0;save();renderDay();return;}
   ex[f]=+e.target.value;
   if(f==='pr') ex.prDate=todayKey();
   save();
@@ -438,7 +471,7 @@ exList.addEventListener('change',e=>{
     const ex=plan(current)[e.target.dataset.i], now=+ex.pr||0, was=prBefore||0;
     if(now>was){
       SFX.record(); if(navigator.vibrate)navigator.vibrate([20,50,20,50,40]);
-      toast(`🏅 New record for ${ex.name}: ${now} reps (was ${was||'—'})`);
+      toast(`🏅 New record for ${ex.name}: ${now} ${isFail(ex)?'reps':UNITS[unitOf(ex)]} (was ${was||'—'})`);
     }
     prBefore=null;
   }
