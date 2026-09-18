@@ -424,8 +424,9 @@
 
     <div class="card">
       <div class="sechead">🧾 Version</div>
-      <div class="secnote">If your browser console shows errors about <b>main.js</b>, you are
-        running an old download. Check the build below matches the newest file.</div>
+      <div class="secnote">This page is one single file with no external scripts.
+        Console errors mentioning <b>main.js</b>, <b>cdn-cgi</b> or <b>challenge-platform</b>
+        come from your host or browser, not from this app.</div>
       <div id="buildTag" style="font-family:ui-monospace,monospace;font-size:13px;
         color:var(--accent);margin-top:6px"></div>
       <div id="buildPath" style="font-size:11px;color:var(--dim);margin-top:4px;word-break:break-all"></div>
@@ -1563,5 +1564,5 @@ console.log('%cWorkout Tracker — Build '+BUILD+' — single file, no external 
 tick();setInterval(tick,1000);renderWeek();checkBackupNag();
 if(dbRecovered) setTimeout(()=>toast('⚠️ Saved data was unreadable — started fresh. A copy was kept.'),700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3cc4c6b5a1482dc',t:'MTc4OTY5MjAxOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3cc572148ea2e10',t:'MTc4OTY5MjQ1Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
