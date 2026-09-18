@@ -157,8 +157,14 @@
     font-size:13px;cursor:pointer;margin-inline-start:7px;vertical-align:middle;flex:none}
   .info.has{background:color-mix(in srgb,var(--accent2) 18%,transparent);border-color:var(--accent2)}
   .info:active{transform:scale(.9)}
-  .nmline{display:flex;align-items:center;gap:2px}
+  .nmline{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
   .nmline b{flex:0 1 auto}
+  .exname{outline:none;border-radius:7px;padding:2px 5px;margin-inline-start:-5px;
+    border:1px solid transparent;min-width:40px;cursor:text;
+    scroll-margin-top:190px;scroll-margin-bottom:170px}
+  .exname:hover{border-color:var(--line)}
+  .exname:focus{border-color:var(--accent2);background:var(--fld);cursor:text}
+  .ex.done .exname{text-decoration:line-through}
   .modal{position:fixed;inset:0;z-index:100;display:flex;align-items:flex-end;justify-content:center;
     background:var(--veil);backdrop-filter:blur(3px)}
   .modal.hide{display:none}
@@ -270,6 +276,7 @@
     background:var(--card);border:1px solid var(--btn);border-radius:16px;padding:12px 14px;
     box-shadow:0 10px 30px var(--shadow);transition:transform .28s cubic-bezier(.2,1.1,.4,1)}
   #restBar.show{transform:translateX(-50%) translateY(0)}
+  body.resting #toast{bottom:calc(120px + env(safe-area-inset-bottom))}
   #restBar .rt{display:flex;align-items:center;gap:12px}
   #restNum{font-size:26px;font-weight:bold;color:var(--btn);min-width:66px;text-align:center;
     font-variant-numeric:tabular-nums}
@@ -294,6 +301,18 @@
   .spark{display:flex;align-items:flex-end;gap:3px;height:30px;margin-top:7px}
   .spark i{flex:1;max-width:16px;background:var(--btn);border-radius:3px 3px 0 0;min-height:3px;opacity:.8}
   .spark i:last-child{opacity:1}
+
+  body.locked .set{opacity:.4;cursor:not-allowed;filter:grayscale(.6)}
+  body.locked .set.on{opacity:.55}
+  body.locked .timerbtn[data-timer]{opacity:.4;cursor:not-allowed}
+  #restBar.nudge{animation:nudge .45s}
+  @keyframes nudge{
+    0%,100%{transform:translateX(-50%) translateY(0)}
+    25%{transform:translateX(-50%) translateY(0) scale(1.04)}
+    50%{transform:translateX(-52%) translateY(0)}
+    75%{transform:translateX(-48%) translateY(0)}
+  }
+  #restBar .hintline{font-size:10.5px;color:var(--muted);margin-top:7px;text-align:center}
 </style>
 </head>
 <body>
@@ -375,7 +394,7 @@
 
     <div class="card">
       <div class="sechead">⏱ Rest timer</div>
-      <div class="secnote">Automatically starts after you check off a set (except the last one of an exercise).</div>
+      <div class="secnote">Automatically starts after you check off a set — except when the whole day is finished.</div>
       <div class="row" id="restOpts"></div>
     </div>
 
@@ -394,11 +413,22 @@
       <div class="sechead">💾 Backup</div>
       <div class="secnote">Your data is stored in this browser only. Clearing site data or switching browsers will erase it.</div>
       <div class="secnote" id="backupInfo" style="font-weight:bold"></div>
+      <div class="secnote" id="offlineInfo" style="margin-top:6px"></div>
+      <button class="ghost" id="nagBtn" data-nosfx="1" style="width:100%;margin-top:4px">🔔 Backup reminder: On</button>
       <div class="row">
         <button class="ghost" id="exportBtn" style="flex:1">📤 Export</button>
         <button class="ghost" id="importBtn" style="flex:1">📥 Import</button>
         <input type="file" id="fileIn" accept="application/json" hidden>
       </div>
+    </div>
+
+    <div class="card">
+      <div class="sechead">🧾 Version</div>
+      <div class="secnote">If your browser console shows errors about <b>main.js</b>, you are
+        running an old download. Check the build below matches the newest file.</div>
+      <div id="buildTag" style="font-family:ui-monospace,monospace;font-size:13px;
+        color:var(--accent);margin-top:6px"></div>
+      <div id="buildPath" style="font-size:11px;color:var(--dim);margin-top:4px;word-break:break-all"></div>
     </div>
 
     <div class="card" style="border-color:rgba(239,68,68,.35)">
@@ -461,6 +491,7 @@
     </div>
   </div>
   <div id="restTrack"><i style="width:100%"></i></div>
+  <div class="hintline" id="restHint">Sets are locked until the rest finishes — tap ✕ to skip.</div>
 </div>
 
 <div id="toast"></div>
@@ -529,11 +560,37 @@ document.addEventListener('pointerdown',e=>{
 },true);
 
 const KEY='workout_program_v3';
-let db=JSON.parse(localStorage.getItem(KEY)||'null')||{plan:[[],[],[],[],[],[],[]],log:{}};
-if(!db.snap)db.snap={};      // frozen copy of the plan for each logged day
-if(!db.prs)db.prs={};        // record history: exName -> [{v,date}]
-if(!db.notes)db.notes=[];
-const save=()=>localStorage.setItem(KEY,JSON.stringify(db));
+const BLANK=()=>({plan:[[],[],[],[],[],[],[]],log:{},snap:{},prs:{},notes:[]});
+/* Never let damaged storage white-screen the app. If the saved data cannot be
+   parsed we keep a copy under a rescue key (so nothing is silently destroyed)
+   and start from a clean slate instead of throwing. */
+let db, dbRecovered=false;
+try{
+  const raw=localStorage.getItem(KEY);
+  db = raw ? JSON.parse(raw) : null;
+  if(!db || typeof db!=='object' || Array.isArray(db)) db=null;
+}catch(e){
+  db=null;
+  try{ localStorage.setItem(KEY+'_corrupt_'+Date.now(), localStorage.getItem(KEY)||''); }catch(_){}
+}
+if(!db){ if(localStorage.getItem(KEY)) dbRecovered=true; db=BLANK(); }
+// Repair individual fields too: a valid object with a broken shape must not crash.
+if(!Array.isArray(db.plan)||db.plan.length!==7) db.plan=[[],[],[],[],[],[],[]];
+for(let i=0;i<7;i++) if(!Array.isArray(db.plan[i])) db.plan[i]=[];
+if(!db.log||typeof db.log!=='object'||Array.isArray(db.log))db.log={};
+if(!db.snap||typeof db.snap!=='object'||Array.isArray(db.snap))db.snap={};
+if(!db.prs||typeof db.prs!=='object'||Array.isArray(db.prs))db.prs={};
+if(!Array.isArray(db.notes))db.notes=[];
+// Repair any out-of-range values written by an older build.
+db.plan.forEach(d=>d.forEach(e=>{
+  e.sets  = Math.min(50,Math.max(1,Math.floor(+e.sets)||1));
+  e.count = Math.min(100000,Math.max(0,Math.floor(+e.count)||0));
+  e.pr    = Math.min(100000,Math.max(0,+e.pr||0));
+}));
+const save=()=>{
+  try{ localStorage.setItem(KEY,JSON.stringify(db)); }
+  catch(e){ try{toast('⚠️ Could not save — device storage is full.');}catch(_){ } }
+};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const uid=()=>Math.random().toString(36).slice(2,9);
 
@@ -600,6 +657,41 @@ function planFor(k){
   if(db.snap&&db.snap[k])return db.snap[k];
   return db.plan[wdOf(k)]||[];
 }
+// Sets actually completed for one exercise id on day k (0 when never touched).
+function doneOn(k,id,n){
+  const a=(db.log[k]||{})[id];
+  if(a===true)return n;
+  return Array.isArray(a)?a.slice(0,n).filter(Boolean).length:0;
+}
+
+/* Remove an exercise from frozen history wherever it was never actually performed.
+   Days where you DID complete sets keep it, because that is real history. */
+/* Mirror an edit into frozen snapshots. Only lifetime fields travel back.
+   NAME is NOT mirrored: a past day must keep the name it was performed under,
+   otherwise renaming an exercise rewrites what you did last week.
+   count, unit and sets are NEVER touched either: they record what you
+   actually did that day and must not change when you edit today's plan. */
+function syncSnapshots(ex){
+  if(!db.snap)return;
+  for(const k in db.snap){
+    const it=db.snap[k].find(e=>e.id===ex.id);
+    if(!it)continue;
+    it.pr=ex.pr; it.prDate=ex.prDate; it.note=ex.note;
+  }
+}
+
+/* Deleting from the plan NEVER edits history. Whatever a past day recorded —
+   ticked or not — stays exactly as it was. Use the per-day 🗑 in the Report
+   to remove a mistaken entry from one specific day. */
+function snapshotDays(id){
+  let n=0;
+  for(const k in (db.snap||{})) if(db.snap[k].some(e=>e.id===id)) n++;
+  return n;
+}
+
+/* No startup cleanup: every frozen day is kept verbatim. */
+function gcSnapshots(){}
+
 function freezeDay(k){        // called the first time a set is ticked on day k
   if(!db.snap)db.snap={};
   if(db.snap[k])return;
@@ -693,7 +785,10 @@ function renderDay(){
     const row=document.createElement('div');
     row.className='ex'+(full?' done':'');
     row.innerHTML=`<div class="nm">
-      <div class="nmline"><b>${esc(e.name)}</b>
+      <div class="nmline">
+        <b class="exname" data-name="${ix}" contenteditable="true" spellcheck="false"
+           title="Tap to rename">${esc(e.name)}</b>
+        <span class="info" data-ren="${ix}" title="Rename">✏️</span>
         <span class="info ${e.note?'has':''}" data-note="${ix}" title="Notes">${e.note?'📝':'ℹ️'}</span></div>
       <span>${amount(e)} × ${ns} set${ns>1?'s':''}${isFail(e)?'':` = <b style="color:var(--accent2)">${tot} ${UNITS[unitOf(e)]}</b>`}
       ${isT?` • <b style="color:var(--accent)">${dn}/${ns} sets</b>`:''}</span>
@@ -732,8 +827,13 @@ function renderDay(){
     <div class="stat"><b>${Math.max(0,...items.map(e=>+e.pr||0))}</b><span>Best record</span></div>`;
 }
 
+/* Keep numbers inside sane bounds: a negative or absurd set count used to
+   throw "Invalid array length" and blank the whole page. */
+const clampSets=v=>Math.min(50,Math.max(1,Math.floor(+v)||1));
+const clampAmt =v=>Math.min(100000,Math.max(0,Math.floor(+v)||0));
 addBtn.onclick=()=>{
-  const n=exName.value.trim(),u=exUnit.value,c=u==='failure'?0:+exCount.value,s=+exSets.value||1;
+  const n=exName.value.trim().slice(0,60),u=exUnit.value;
+  const c=u==='failure'?0:clampAmt(exCount.value), s=clampSets(exSets.value);
   if(!n){SFX.error();toast('⚠️ Enter an exercise name.');return;}
   if(u!=='failure'&&!c){SFX.error();toast('⚠️ Enter an amount (or choose "to failure").');return;}
   plan(current).push({id:uid(),name:n,count:c,unit:u,sets:s,pr:0,prDate:'',note:''});
@@ -745,10 +845,20 @@ exName.addEventListener('keydown',e=>{if(e.key==='Enter')exCount.focus();});
 exCount.addEventListener('keydown',e=>{if(e.key==='Enter')addBtn.click();});
 
 exList.addEventListener('click',e=>{
-  const inf=e.target.closest('.info');
+  const ren=e.target.closest('[data-ren]');
+  if(ren){
+    const el=exList.querySelector(`.exname[data-name="${ren.dataset.ren}"]`);
+    if(el){el.focus();
+      const r=document.createRange();r.selectNodeContents(el);
+      const sel=getSelection();sel.removeAllRanges();sel.addRange(r);}
+    SFX.click();return;}
+  const inf=e.target.closest('.info[data-note]');
   if(inf){openNote(+inf.dataset.note);return;}
   const tb=e.target.closest('[data-timer]');
-  if(tb){const ex=plan(current)[+tb.dataset.timer];
+  if(tb){
+    if(rt.id&&rt.mode==='rest'){SFX.error();
+      toast(`⏱ Rest in progress — ${mmss(Math.max(0,rt.left))} left.`);return;}
+    const ex=plan(current)[+tb.dataset.timer];
     const secs=unitOf(ex)==='min'?(+ex.count||0)*60:(+ex.count||0);
     if(secs>0){startTimer(secs,ex.name,'Exercise timer','ex');SFX.check();}
     return;}
@@ -758,28 +868,76 @@ exList.addEventListener('click',e=>{
     [L[a],L[b]]=[L[b],L[a]];save();renderDay();SFX.click();return;}
   const t=e.target.closest('.set'), d=e.target.dataset.del;
   if(t){
+    // While resting, sets are locked: finish the rest or stop it first.
+    if(rt.id&&rt.mode==='rest'){
+      SFX.error();
+      toast(`⏱ Rest in progress — ${mmss(Math.max(0,rt.left))} left. Tap ✕ to skip.`);
+      restBar.classList.add('nudge');
+      setTimeout(()=>restBar.classList.remove('nudge'),450);
+      return;
+    }
     const tk=targetKey(current);
     if(!tk){SFX.error();toast('🔒 You can only check off sets on today (Iran time).');return;}
     const ex=plan(current)[+t.dataset.ex], ns=+ex.sets||1, si=+t.dataset.set;
     const L=logFor(tk), arr=setsOf(ex.id,ns,tk);
     freezeDay(tk);
     arr[si]=!arr[si]; L[ex.id]=arr; save(); renderDay();
-    if(arr[si]&&restLen>0&&tk===todayKey()){
-      const n2=+ex.sets||1, d2=arr.filter(Boolean).length;
-      if(d2<n2) startTimer(restLen,'Rest — '+ex.name,`Set ${d2} of ${n2} done`,'rest');
-    }
     if(arr[si]){
       const items=plan(current);
       const allDone=items.every(x=>{const n=+x.sets||1;return doneSets(x.id,n,tk)>=n;});
+      // Rest after every completed set — except when the whole day is finished.
+      if(restLen>0&&tk===todayKey()&&!allDone){
+        const n2=+ex.sets||1, d2=arr.filter(Boolean).length;
+        const more=d2<n2;
+        startTimer(restLen,
+          more?('Rest — '+ex.name):'Rest before next exercise',
+          more?`Set ${d2} of ${n2} done`:`${ex.name} finished ✔`,
+          'rest');
+      }
       if(allDone){SFX.record();if(navigator.vibrate)navigator.vibrate([25,60,25,60,45]);
         setTimeout(()=>toast('🔥 Day complete! Streak: '+streaks().cur+' day(s)'),80);}
       else arr.every(Boolean)?SFX.complete():SFX.check();
     } else SFX.uncheck();
     renderWeek();
   } else if(d!==undefined&&confirm('Remove this exercise from the plan?')){
-    plan(current).splice(+d,1);save();renderDay();SFX.delete();
+    const gone=plan(current).splice(+d,1)[0];
+    const days=snapshotDays(gone.id);
+    save();renderDay();SFX.delete();
+    toast(days
+      ? `🗑 Removed from your plan — past days are kept in the report`
+      : `🗑 "${gone.name}" removed`);
   }
 });
+/* ===== inline rename ===== */
+let nameBefore=null;
+exList.addEventListener('focusin',e=>{
+  if(!e.target.classList.contains('exname'))return;
+  nameBefore=e.target.textContent;
+  setTimeout(()=>e.target.scrollIntoView({block:'center',behavior:'smooth'}),60);
+});
+exList.addEventListener('keydown',e=>{
+  if(!e.target.classList.contains('exname'))return;
+  if(e.key==='Enter'){e.preventDefault();e.target.blur();}
+  if(e.key==='Escape'){e.target.textContent=nameBefore;e.target.blur();}
+});
+exList.addEventListener('focusout',e=>{
+  if(!e.target.classList.contains('exname'))return;
+  const ix=+e.target.dataset.name, ex=plan(current)[ix];
+  if(!ex)return;
+  const v=e.target.textContent.replace(/\s+/g,' ').trim();
+  if(!v){e.target.textContent=ex.name;SFX.error();toast('⚠️ Name cannot be empty.');return;}
+  if(v===ex.name)return;
+  const old=ex.name;
+  ex.name=v;
+  // carry the record history over to the new name
+  if(db.prs&&db.prs[old]&&!db.prs[v]){db.prs[v]=db.prs[old];delete db.prs[old];}
+  const past=snapshotDays(ex.id);
+  syncSnapshots(ex);
+  save();renderDay();SFX.add();
+  toast(past ? `✏️ Renamed to "${v}" — past days keep "${old}"`
+             : `✏️ Renamed to "${v}"`);
+});
+
 let prBefore=null;
 exList.addEventListener('focusin',e=>{
   if(e.target.dataset.f==='pr') prBefore=+plan(current)[e.target.dataset.i].pr||0;
@@ -788,8 +946,11 @@ exList.addEventListener('input',e=>{
   const i=e.target.dataset.i;if(i===undefined)return;
   const ex=plan(current)[i], f=e.target.dataset.f;
   if(f==='unit'){ex.unit=e.target.value;if(ex.unit==='failure')ex.count=0;save();renderDay();return;}
-  ex[f]=+e.target.value;
+  ex[f] = f==='sets' ? clampSets(e.target.value)
+        : f==='count'? clampAmt(e.target.value)
+        : Math.max(0,Math.min(100000,+e.target.value||0));
   if(f==='pr') ex.prDate=todayKey();
+  syncSnapshots(ex);
   save();
 });
 exList.addEventListener('change',e=>{
@@ -811,7 +972,17 @@ exportBtn.onclick=()=>{const b=new Blob([JSON.stringify(db,null,2)],{type:'appli
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='workout-'+todayKey()+'.json';a.click();markBackup();SFX.add();toast('📤 Backup exported');};
 importBtn.onclick=()=>fileIn.click();
 fileIn.onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();
-  r.onload=()=>{try{const o=JSON.parse(r.result);if(!o.plan)throw 0;db=o;if(!db.notes)db.notes=[];if(!db.snap)db.snap={};if(!db.prs)db.prs={};save();renderWeek();renderNotes();}catch{toast('⚠️ Invalid file');}};
+  r.onload=()=>{try{
+    const o=JSON.parse(r.result);
+    if(!o||typeof o!=='object'||!Array.isArray(o.plan)||o.plan.length!==7)throw 0;
+    for(let i=0;i<7;i++) if(!Array.isArray(o.plan[i])) o.plan[i]=[];
+    db=o;
+    if(!db.log||typeof db.log!=='object')db.log={};
+    if(!Array.isArray(db.notes))db.notes=[];
+    if(!db.snap||typeof db.snap!=='object')db.snap={};
+    if(!db.prs||typeof db.prs!=='object')db.prs={};
+    save();renderWeek();renderNotes();toast('📥 Backup restored');
+  }catch{SFX.error();toast('⚠️ Invalid file');}};
   r.readAsText(f);};
 
 soundBtn.onclick=()=>{soundOn=!soundOn;localStorage.setItem(SKEY,soundOn?'1':'0');
@@ -840,6 +1011,7 @@ function closeNote(){noteModal.classList.add('hide');noteIx=null;}
 noteSave.onclick=()=>{
   if(noteIx===null)return;
   plan(current)[noteIx].note=noteText.value.trim();
+  syncSnapshots(plan(current)[noteIx]);
   save();renderDay();closeNote();SFX.add();
 };
 noteClose.onclick=()=>{closeNote();SFX.back();};
@@ -869,7 +1041,7 @@ function switchTab(t){
   if(t==='w'){show(weekView);renderWeek();}
   else if(t==='n'){show(nbList);renderNotes();}
   else if(t==='r'){show(repView);repOffset=0;renderReport();}
-  else {show(setView);renderThemes();renderRest();paintBackup();}
+  else {show(setView);renderThemes();renderRest();paintBackup();paintOffline();paintNag();}
   SFX.click();scrollTo(0,0);
 }
 tabWorkout.onclick=()=>switchTab('w');
@@ -883,31 +1055,42 @@ tabReport.onclick=()=>switchTab('r');
 /* ===== Offline support (PWA) =====
    The whole app is a single file, so we cache this document itself. */
 (function(){
+  // Absolute URLs — a manifest served from a blob: URL cannot resolve relative paths,
+  // so start_url/scope must be fully-qualified or the browser rejects them.
+  const here = location.href.split('#')[0].split('?')[0];
+  const dir  = here.slice(0, here.lastIndexOf('/') + 1);
+  const ICON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230e1117'/%3E%3Cg fill='%234ade80'%3E%3Crect x='26' y='28' width='12' height='8' rx='2'/%3E%3Crect x='18' y='24' width='7' height='16' rx='2.5'/%3E%3Crect x='39' y='24' width='7' height='16' rx='2.5'/%3E%3Crect x='11' y='28' width='6' height='8' rx='2.5'/%3E%3Crect x='47' y='28' width='6' height='8' rx='2.5'/%3E%3C/g%3E%3C/svg%3E";
+
+  const isFile = location.protocol === 'file:';
   try{
-    const mf=new Blob(["{\"name\":\"Weekly Workout Tracker\",\"short_name\":\"Workout\",\"start_url\":\".\",\"display\":\"standalone\",\"background_color\":\"#0e1117\",\"theme_color\":\"#0e1117\",\"icons\":[{\"src\":\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230e1117'/%3E%3Cg fill='%234ade80'%3E%3Crect x='26' y='28' width='12' height='8' rx='2'/%3E%3Crect x='18' y='24' width='7' height='16' rx='2.5'/%3E%3Crect x='39' y='24' width='7' height='16' rx='2.5'/%3E%3Crect x='11' y='28' width='6' height='8' rx='2.5'/%3E%3Crect x='47' y='28' width='6' height='8' rx='2.5'/%3E%3C/g%3E%3C/svg%3E\",\"sizes\":\"any\",\"type\":\"image/svg+xml\",\"purpose\":\"any maskable\"}]}"],{type:'application/manifest+json'});
+    if(isFile) throw 0;   // file:// is a unique origin: manifests & SW are not allowed
+    const manifest = {
+      name:'Weekly Workout Tracker',
+      short_name:'Workout',
+      start_url: here,
+      scope: dir,
+      display:'standalone',
+      orientation:'portrait',
+      background_color:'#0e1117',
+      theme_color:'#0e1117',
+      icons:[{src:ICON, sizes:'any', type:'image/svg+xml', purpose:'any'},
+             {src:ICON, sizes:'any', type:'image/svg+xml', purpose:'maskable'}]
+    };
+    const mf=new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'});
     const l=document.createElement('link');
-    l.rel='manifest';l.href=URL.createObjectURL(mf);
+    l.rel='manifest'; l.href=URL.createObjectURL(mf);
     document.head.appendChild(l);
   }catch(e){}
 
+  // Register the service worker for offline use.
+  // Requires sw.js to sit next to index.html (it is optional: without it the app
+  // still works online, it just will not be available offline).
   if('serviceWorker' in navigator && location.protocol.startsWith('http')){
-    const swCode=`
-      const C='workout-v1';
-      self.addEventListener('install',e=>{self.skipWaiting();
-        e.waitUntil(caches.open(C).then(c=>c.addAll(['./','./index.html']).catch(()=>{})));});
-      self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
-      self.addEventListener('fetch',e=>{
-        if(e.request.method!=='GET')return;
-        e.respondWith(
-          fetch(e.request).then(r=>{
-            const cp=r.clone();
-            caches.open(C).then(c=>c.put(e.request,cp)).catch(()=>{});
-            return r;
-          }).catch(()=>caches.match(e.request).then(r=>r||caches.match('./')))
-        );
-      });`;
-    const url=URL.createObjectURL(new Blob([swCode],{type:'text/javascript'}));
-    navigator.serviceWorker.register(url).catch(()=>{});
+    window.addEventListener('load',()=>{
+      navigator.serviceWorker.register(dir+'sw.js',{scope:dir})
+        .then(()=>{window.__swReady=true;})
+        .catch(()=>{window.__swReady=false;});
+    });
   }
 })();
 
@@ -920,7 +1103,10 @@ function startTimer(sec,label,sub,mode){
   stopTimer(true);
   rt={id:null,left:sec,total:sec,mode:mode||'rest'};
   restLabel.textContent=label; restSub.textContent=sub||'';
+  restHint.style.display=(mode==='ex')?'none':'block';
   restBar.classList.add('show');
+  document.body.classList.add('resting');
+  document.body.classList.toggle('locked', (mode||'rest')==='rest');
   paintTimer();
   rt.id=setInterval(()=>{
     rt.left--;
@@ -941,11 +1127,13 @@ function finishTimer(){
   clearInterval(rt.id);rt.id=null;
   SFX.complete(); if(navigator.vibrate)navigator.vibrate([90,60,90]);
   toast(rt.mode==='ex'?'⏱ Time is up — set finished!':'💪 Rest over — next set!');
-  setTimeout(()=>restBar.classList.remove('show'),1400);
+  document.body.classList.remove('locked');   // unlock the moment rest ends
+  setTimeout(()=>{restBar.classList.remove('show');document.body.classList.remove('resting');},1400);
 }
 function stopTimer(silent){
   if(rt.id)clearInterval(rt.id);
   rt.id=null;restBar.classList.remove('show');
+  document.body.classList.remove('resting','locked');
   if(!silent)SFX.back();
 }
 restStop.onclick=()=>stopTimer();
@@ -1025,9 +1213,21 @@ function renderReport(){
     <div class="wbartxt">${pct}% of this week's planned sets completed</div>`;
 
   renderRepDay();
-  const prs=db.plan.flat().filter(e=>+e.pr>0).sort((a,b)=>(+b.pr)-(+a.pr));
-  repPr.innerHTML = prs.length ? prs.map(e=>{
+  // Records survive deletion: merge the live plan with every exercise that
+  // still exists in frozen history (so a retired exercise keeps its PB).
+  // Keyed by id so renaming keeps ONE record entry (history rows may still
+  // carry the old name; the live plan name always wins for display).
+  const seen=new Map();
+  db.plan.flat().forEach(e=>{ if(+e.pr>0) seen.set(e.id||e.name.trim(),{e,live:true}); });
+  Object.values(db.snap||{}).flat().forEach(e=>{
+    const k=e.id||e.name.trim();
+    if(+e.pr>0 && !seen.has(k)) seen.set(k,{e,live:false});
+    else if(+e.pr>0 && !seen.get(k).live && +e.pr>+seen.get(k).e.pr) seen.set(k,{e,live:false});
+  });
+  const prs=[...seen.values()].sort((a,b)=>(+b.e.pr)-(+a.e.pr));
+  repPr.innerHTML = prs.length ? prs.map(({e,live})=>{
     const h=(db.prs||{})[e.name.trim()]||[];
+    // (db.prs is re-keyed on rename, so the chart follows the new name)
     let spark='';
     if(h.length>1){
       const vals=h.map(x=>x.v), mx=Math.max(...vals), mn=Math.min(...vals);
@@ -1037,7 +1237,7 @@ function renderReport(){
     const first=h.length>1?h[0].v:null;
     return `<div class="rex" style="display:block">
       <div style="display:flex;justify-content:space-between;gap:10px">
-        <span>${esc(e.name)}</span>
+        <span>${esc(e.name)}${live?'':' <span class="tag" style="font-size:9px">retired</span>'}</span>
         <span class="rq">🏅 ${e.pr} ${isFail(e)?'reps':UNITS[unitOf(e)]}${e.prDate?' • '+jal(e.prDate,{day:'numeric',month:'short',year:'numeric'}):''}</span>
       </div>
       ${spark}
@@ -1077,7 +1277,10 @@ function renderRepDay(){
     return `<div class="rex" style="display:block">
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">
         <span>${d>=n?'✅ ':''}${esc(e.name)}</span>
-        <span class="rq">${d}/${n} sets • ${amt}</span>
+        <span class="rq">${d}/${n} sets • ${amt}
+          <span class="iconbtn del" data-rmlog="${e.id}" title="Remove from this day's history"
+            style="display:inline-flex;width:24px;height:24px;font-size:11px;margin-inline-start:6px;vertical-align:middle">🗑</span>
+        </span>
       </div>
       <div class="mdots">${dots}</div>
       ${+e.pr?`<div class="rq" style="margin-top:4px">🏅 Record: ${e.pr} ${isFail(e)?'reps':UNITS[unitOf(e)]}${e.prDate?' • '+jal(e.prDate,{day:'numeric',month:'short',year:'numeric'}):''}</div>`:''}
@@ -1091,6 +1294,27 @@ function renderRepDay(){
       <div class="stat"><b>${vol}</b><span>Volume done</span></div>
     </div>${rows}`;
 }
+let rmArm=null;
+repEx.addEventListener('click',e=>{
+  const rb=e.target.closest('[data-rmlog]'); if(!rb)return;
+  const id=rb.dataset.rmlog, k=repSelKey;
+  const it=(db.snap[k]||[]).find(x=>x.id===id)||planFor(k).find(x=>x.id===id);
+  const nm=it?it.name:'this exercise';
+  if(rmArm!==id){
+    rmArm=id;SFX.error();toast(`⚠️ Tap 🗑 again to remove "${nm}" from this day`);
+    clearTimeout(rmArm_t);rmArm_t=setTimeout(()=>rmArm=null,3200);return;
+  }
+  rmArm=null;
+  // If the day was never frozen, freeze it first so we only edit THIS day.
+  if(!db.snap[k])db.snap[k]=JSON.parse(JSON.stringify(db.plan[wdOf(k)]||[]));
+  db.snap[k]=db.snap[k].filter(x=>x.id!==id);
+  if(db.log[k])delete db.log[k][id];
+  if(db.snap[k].length===0)delete db.snap[k];
+  if(db.log[k]&&Object.keys(db.log[k]).length===0)delete db.log[k];
+  save();renderReport();SFX.delete();toast(`🗑 "${nm}" removed from this day`);
+});
+let rmArm_t;
+
 repDays.addEventListener('click',e=>{
   const r=e.target.closest('.rday'); if(!r)return;
   repSelKey=r.dataset.k; renderRepDay(); SFX.click();
@@ -1151,6 +1375,30 @@ restOpts.onclick=e=>{
   toast(restLen?('⏱ Rest timer set to '+restLen+'s'):'⏱ Rest timer turned off');
 };
 
+/* ===== Backup reminder toggle ===== */
+function bindNag(){
+  nagBtn.onclick=()=>{
+    localStorage.setItem(NKEY,nagOn()?'0':'1');
+    paintNag();SFX.check();
+    toast(nagOn()?'🔔 Backup reminders enabled':'🔕 Backup reminders turned off');
+  };
+}
+
+/* ===== Offline status ===== */
+async function paintOffline(){
+  // Only ever show a positive confirmation; stay silent otherwise.
+  offlineInfo.textContent='';
+  if(!location.protocol.startsWith('http')){
+    offlineInfo.textContent='✅ Running as a local file — already fully offline.';
+    offlineInfo.style.color='var(--accent)';return;}
+  if(!('serviceWorker' in navigator))return;
+  try{
+    const r=await navigator.serviceWorker.getRegistration();
+    if(r){offlineInfo.textContent='✅ Offline ready — works without internet.';
+      offlineInfo.style.color='var(--accent)';}
+  }catch(e){}
+}
+
 /* ===== Catch-up toggle ===== */
 function paintGrace(){graceBtn.textContent=graceOn()?'⏳ Catch-up: On (until 12:00)':'🚫 Catch-up: Off';}
 graceBtn.onclick=()=>{localStorage.setItem(GKEY,graceOn()?'0':'1');paintGrace();SFX.check();
@@ -1166,11 +1414,17 @@ function daysSinceBackup(){
 }
 function paintBackup(){
   const d=daysSinceBackup();
-  backupInfo.textContent = d===null ? '⚠️ You have never exported a backup.'
+  backupInfo.textContent = d===null ? 'No backup exported yet.'
     : (d===0?'✅ Backed up today.':`Last backup: ${d} day${d>1?'s':''} ago.`);
-  backupInfo.style.color = (d===null||d>=7) ? 'var(--warn)' : 'var(--muted)';
+  backupInfo.style.color = (nagOn()&&(d===null||d>=7)) ? 'var(--warn)' : 'var(--muted)';
+}
+const NKEY='workout_backup_nag';
+const nagOn=()=>localStorage.getItem(NKEY)!=='0';
+function paintNag(){
+  nagBtn.textContent=nagOn()?'🔔 Backup reminder: On':'🔕 Backup reminder: Off';
 }
 function checkBackupNag(){
+  if(!nagOn())return;
   const d=daysSinceBackup();
   const hasData=db.plan.flat().length||Object.keys(db.log).length;
   if(!hasData)return;
@@ -1293,7 +1547,21 @@ nbDel.onclick=()=>{
 };
 
 
+bindNag();paintNag();
+gcSnapshots();
+const BUILD='v12 • 2026-09-18';
+try{
+  buildTag.textContent='Build '+BUILD;
+  // Show only the file name, never the whole URL (preview links are huge tokens).
+  const u=decodeURIComponent(location.href.split('#')[0].split('?')[0]);
+  const f=u.slice(u.lastIndexOf('/')+1)||'index.html';
+  buildPath.textContent=(location.protocol==='file:'?'Local file: ':'Opened from: ')+f;
+}catch(e){}
+console.log('%cWorkout Tracker — Build '+BUILD+' — single file, no external scripts.',
+  'color:#4ade80;font-weight:bold');
+
 tick();setInterval(tick,1000);renderWeek();checkBackupNag();
+if(dbRecovered) setTimeout(()=>toast('⚠️ Saved data was unreadable — started fresh. A copy was kept.'),700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3cbd7784b9c0a3c',t:'MTc4OTY4NzIyOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3cc4c6b5a1482dc',t:'MTc4OTY5MjAxOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
