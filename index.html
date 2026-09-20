@@ -270,6 +270,25 @@
   .mdot{width:15px;height:15px;border-radius:5px;background:var(--fld);border:1.5px solid var(--line)}
   .mdot.on{background:var(--btn);border-color:var(--btn)}
 
+  /* ===== planner ===== */
+  .plitem{display:flex;align-items:center;gap:9px;padding:10px 2px;border-bottom:1px solid var(--line);flex-wrap:nowrap}
+  .plitem:last-child{border:none}
+  .plchk{width:28px;height:28px;min-width:28px;border-radius:50%;border:2px solid var(--line);background:var(--fld);
+    color:var(--btnTxt);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:bold;
+    cursor:pointer;flex:none;transition:transform .1s}
+  .plchk.on{background:var(--btn);border-color:var(--btn)}
+  .plchk.off{opacity:.4;cursor:not-allowed}
+  .plchk:active{transform:scale(.88)}
+  .pltime{width:62px;text-align:center;padding:7px 4px;font-size:13px;flex:none}
+  .plname{flex:1;min-width:0;outline:none;border-radius:7px;padding:3px 6px;border:1px solid transparent;
+    cursor:text;font-size:14px;word-break:break-word}
+  .plname:hover{border-color:var(--line)}
+  .plname:focus{border-color:var(--accent2);background:var(--fld)}
+  .plitem.done .plname{text-decoration:line-through;opacity:.5}
+  .plitem .danger{padding:6px 9px;min-height:36px}
+  .plitem .timerbtn{min-height:32px}
+  #plDays .timerbtn{flex:1;min-width:0;padding:6px 2px;font-size:11px}
+
   /* ===== timers ===== */
   #restBar{position:fixed;left:50%;transform:translateX(-50%) translateY(150%);
     bottom:calc(16px + env(safe-area-inset-bottom));z-index:190;width:min(420px,92vw);
@@ -323,6 +342,7 @@
   <div class="tabs" id="tabs">
     <button id="tabWorkout" class="on" data-nosfx="1">🏋️ Workout</button>
     <button id="tabReport" data-nosfx="1">📊 Report</button>
+    <button id="tabPlanner" data-nosfx="1">📅 Planner</button>
     <button id="tabNotes" data-nosfx="1">📒 Notes</button>
     <button id="tabSettings" data-nosfx="1">⚙️ Settings</button>
   </div>
@@ -354,6 +374,46 @@
     <div class="card">
       <div class="sechead">🏅 Records (as of this week)</div>
       <div id="repPr"></div>
+    </div>
+  </div>
+
+  <!-- ===== Planner ===== -->
+  <div id="plView" class="hide">
+    <div class="card">
+      <div class="sechead">📅 Weekly routine</div>
+      <div class="secnote">Your repeating daily schedule (Tehran time). Use <b>☀️ Daily</b> for one list that
+        repeats every single day, or pick a weekday for day-specific items.
+        Ticks only count for <b>today</b> and reset at midnight.</div>
+      <div class="row" id="plDays" style="flex-wrap:nowrap;gap:5px"></div>
+    </div>
+    <div class="card">
+      <div class="row">
+        <input id="plTime" placeholder="Time" inputmode="numeric" maxlength="10" style="width:84px" title="Optional, e.g. 06:30">
+        <input id="plTask" placeholder="Routine item (e.g. Gym, Read 30 min)" style="flex:1;min-width:140px">
+        <button id="plAdd">➕ Add</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="sechead" id="plDayTitle"></div>
+      <div id="plList"></div>
+      <div class="empty" id="plEmpty">Nothing planned for this day yet — add your routine above.</div>
+      <div id="plProg"></div>
+    </div>
+    <div class="card">
+      <div class="sechead">✅ Tasks</div>
+      <div class="secnote">One-off things you need to get done — not tied to any weekday.</div>
+      <div class="row">
+        <input id="todoIn" placeholder="New task (e.g. Buy protein powder)" style="flex:1;min-width:150px">
+        <button id="todoAdd">➕ Add</button>
+      </div>
+    </div>
+    <div class="card">
+      <div id="todoList"></div>
+      <div class="empty" id="todoEmpty">No tasks yet — add one above.</div>
+      <div class="row" id="todoFoot" style="margin-top:10px;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;color:var(--muted)" id="todoCount"></span>
+        <button class="ghost" id="todoClear" data-nosfx="1" style="min-height:36px;padding:6px 12px;font-size:12px">🧹 Clear completed</button>
+      </div>
     </div>
   </div>
 
@@ -561,7 +621,8 @@ document.addEventListener('pointerdown',e=>{
 },true);
 
 const KEY='workout_program_v3';
-const BLANK=()=>({plan:[[],[],[],[],[],[],[]],log:{},snap:{},prs:{},notes:[]});
+const BLANK=()=>({plan:[[],[],[],[],[],[],[]],log:{},snap:{},prs:{},notes:[],
+  planner:{days:[[],[],[],[],[],[],[]],todo:[],daily:[]},rlog:{}});
 /* Never let damaged storage white-screen the app. If the saved data cannot be
    parsed we keep a copy under a rescue key (so nothing is silently destroyed)
    and start from a clean slate instead of throwing. */
@@ -582,6 +643,30 @@ if(!db.log||typeof db.log!=='object'||Array.isArray(db.log))db.log={};
 if(!db.snap||typeof db.snap!=='object'||Array.isArray(db.snap))db.snap={};
 if(!db.prs||typeof db.prs!=='object'||Array.isArray(db.prs))db.prs={};
 if(!Array.isArray(db.notes))db.notes=[];
+/* Planner fields were added in v13 — old saves simply don't have them. */
+if(!db.planner||typeof db.planner!=='object'||Array.isArray(db.planner))db.planner={days:null,todo:null};
+if(!Array.isArray(db.planner.days)||db.planner.days.length!==7)db.planner.days=[[],[],[],[],[],[],[]];
+for(let i=0;i<7;i++) if(!Array.isArray(db.planner.days[i])) db.planner.days[i]=[];
+db.planner.days.forEach(d=>d.forEach(it=>{
+  it.id=it.id||(Math.random().toString(36).slice(2,9)); /* uid() is not defined yet here */
+  it.time=String(it.time==null?'':it.time).slice(0,10);
+  it.title=String(it.title==null?'':it.title).slice(0,80);
+}));
+if(!Array.isArray(db.planner.daily))db.planner.daily=[];
+db.planner.daily.forEach(it=>{
+  it.id=it.id||(Math.random().toString(36).slice(2,9));
+  it.time=String(it.time==null?'':it.time).slice(0,10);
+  it.title=String(it.title==null?'':it.title).slice(0,80);
+});
+if(!Array.isArray(db.planner.todo))db.planner.todo=[];
+db.planner.todo=db.planner.todo.filter(t=>t&&typeof t==='object');
+db.planner.todo.forEach(t=>{
+  t.id=t.id||(Math.random().toString(36).slice(2,9));
+  t.text=String(t.text==null?'':t.text).slice(0,120);
+  t.done=!!t.done;
+  t.date=t.date||'';
+});
+if(!db.rlog||typeof db.rlog!=='object'||Array.isArray(db.rlog))db.rlog={};
 // Repair any out-of-range values written by an older build.
 db.plan.forEach(d=>d.forEach(e=>{
   e.sets  = Math.min(50,Math.max(1,Math.floor(+e.sets)||1));
@@ -721,7 +806,8 @@ function streaks(){
 
 function tick(){const p=iranNow();
   clock.textContent=`⏱ ${jal(todayKey(),{weekday:'long',day:'numeric',month:'long',year:'numeric'})} — ${p.hour}:${p.minute}:${p.second} Tehran time`;
-  if(tick.last&&tick.last!==todayKey()){renderWeek();if(current!==null)renderDay();}
+  if(tick.last&&tick.last!==todayKey()){renderWeek();if(current!==null)renderDay();
+    gcRlog();if(!plView.classList.contains('hide'))renderPlanner();}
   tick.last=todayKey();}
 
 function renderWeek(){
@@ -982,6 +1068,12 @@ fileIn.onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileRea
     if(!Array.isArray(db.notes))db.notes=[];
     if(!db.snap||typeof db.snap!=='object')db.snap={};
     if(!db.prs||typeof db.prs!=='object')db.prs={};
+    if(!db.planner||typeof db.planner!=='object'||Array.isArray(db.planner))db.planner={days:null,todo:null};
+    if(!Array.isArray(db.planner.days)||db.planner.days.length!==7)db.planner.days=[[],[],[],[],[],[],[]];
+    for(let i=0;i<7;i++) if(!Array.isArray(db.planner.days[i])) db.planner.days[i]=[];
+    if(!Array.isArray(db.planner.todo))db.planner.todo=[];
+    if(!Array.isArray(db.planner.daily))db.planner.daily=[];
+    if(!db.rlog||typeof db.rlog!=='object')db.rlog={};
     save();renderWeek();renderNotes();toast('📥 Backup restored');
   }catch{SFX.error();toast('⚠️ Invalid file');}};
   r.readAsText(f);};
@@ -1034,14 +1126,16 @@ const hideEl=el=>el.classList.add('hide');
 
 function switchTab(t){
   nbCur=null;current=null;
-  [weekView,dayView,nbList,nbEditor,setView,repView].forEach(hideEl);
+  [weekView,dayView,nbList,nbEditor,setView,repView,plView].forEach(hideEl);
   tabWorkout.classList.toggle('on',t==='w');
   tabNotes.classList.toggle('on',t==='n');
   tabSettings.classList.toggle('on',t==='s');
   tabReport.classList.toggle('on',t==='r');
+  tabPlanner.classList.toggle('on',t==='p');
   if(t==='w'){show(weekView);renderWeek();}
   else if(t==='n'){show(nbList);renderNotes();}
   else if(t==='r'){show(repView);repOffset=0;renderReport();}
+  else if(t==='p'){show(plView);renderPlanner();}
   else {show(setView);renderThemes();renderRest();paintBackup();paintOffline();paintNag();}
   SFX.click();scrollTo(0,0);
 }
@@ -1049,6 +1143,7 @@ tabWorkout.onclick=()=>switchTab('w');
 tabNotes.onclick=()=>switchTab('n');
 tabSettings.onclick=()=>switchTab('s');
 tabReport.onclick=()=>switchTab('r');
+tabPlanner.onclick=()=>switchTab('p');
 
 
 
@@ -1427,7 +1522,8 @@ function paintNag(){
 function checkBackupNag(){
   if(!nagOn())return;
   const d=daysSinceBackup();
-  const hasData=db.plan.flat().length||Object.keys(db.log).length;
+  const hasData=db.plan.flat().length||Object.keys(db.log).length||
+    db.notes.length||db.planner.todo.length||db.planner.daily.length||db.planner.days.flat().length;
   if(!hasData)return;
   if(d===null||d>=10){
     const shown=sessionStorage.getItem('nag');
@@ -1441,13 +1537,14 @@ let armLog=false,armAll=false;
 resetLog.onclick=()=>{
   if(!armLog){armLog=true;resetLog.textContent='🔄 Tap again to reset progress';SFX.error();
     clearTimeout(resetLog.t);resetLog.t=setTimeout(()=>{armLog=false;resetLog.textContent='🔄 Reset progress & streaks only';},3200);return;}
-  db.log={};db.snap={};armLog=false;resetLog.textContent='🔄 Reset progress & streaks only';
+  db.log={};db.snap={};db.rlog={};armLog=false;resetLog.textContent='🔄 Reset progress & streaks only';
   save();SFX.delete();toast('🔄 Progress and streaks cleared');
 };
 resetAll.onclick=()=>{
   if(!armAll){armAll=true;resetAll.textContent='🗑 Tap again to ERASE EVERYTHING';SFX.error();
     clearTimeout(resetAll.t);resetAll.t=setTimeout(()=>{armAll=false;resetAll.textContent='🗑 Erase everything (plan, notes, records)';},3500);return;}
-  db={plan:[[],[],[],[],[],[],[]],log:{},snap:{},prs:{},notes:[]};
+  db={plan:[[],[],[],[],[],[],[]],log:{},snap:{},prs:{},notes:[],
+    planner:{days:[[],[],[],[],[],[],[]],todo:[],daily:[]},rlog:{}};
   armAll=false;resetAll.textContent='🗑 Erase everything (plan, notes, records)';
   save();SFX.delete();toast('🗑 Everything has been erased');
 };
@@ -1548,9 +1645,181 @@ nbDel.onclick=()=>{
 };
 
 
+/* ===== Planner: weekly routine + task list =====
+   Routine items repeat every week (db.planner.days[weekday]). A tick only
+   means "done TODAY", so ticks live in db.rlog[date][itemId] and everything
+   except today's key is purged — yesterday always starts unchecked again. */
+/* plDay 0-6 = weekday, 7 = the "☀️ Every day" list (same thing every day). */
+const PDKEY='workout_plday';
+let plDay=(()=>{const raw=localStorage.getItem(PDKEY);
+  if(raw===null)return wdToday();           // first visit: land on today
+  const v=+raw; return (v>=0&&v<=7)?v:wdToday();})();
+const plSel=()=>plDay===7?(db.planner.daily||(db.planner.daily=[]))
+                        :(db.planner.days[plDay]||(db.planner.days[plDay]=[]));
+function gcRlog(){
+  const t=todayKey();let dirty=false;
+  for(const k in db.rlog) if(k!==t){delete db.rlog[k];dirty=true;}
+  if(dirty)save();
+}
+const plTicked=id=>{const R=db.rlog[todayKey()];return !!(R&&R[id]);};
+
+function renderPlanner(){
+  gcRlog();
+  const isT=plDay===7?true:plDay===wdToday(), items=plSel();
+  plDays.innerHTML=
+    `<button class="timerbtn ${plDay===7?'run':''}" data-plday="7" data-nosfx="1"
+      title="One list that repeats every single day">☀️ Daily</button>`+
+    NAMES.map((n,i)=>
+    `<button class="timerbtn ${i===plDay?'run':''}" data-plday="${i}" data-nosfx="1"
+      style="${i===wdToday()?'border-color:var(--accent2);':''}">${n.slice(0,3)}${i===wdToday()?' •':''}</button>`).join('');
+  plDayTitle.innerHTML=plDay===7
+    ?'☀️ Every day&rsquo;s routine <span class="tag t" style="margin-inline-start:6px">Repeats daily ✔</span>'
+    :`🕒 ${esc(NAMES[plDay])}&rsquo;s routine`+
+     (plDay===wdToday()?' <span class="tag t" style="margin-inline-start:6px">Today ✔</span>':'');
+  plList.innerHTML='';
+  plEmpty.style.display=items.length?'none':'block';
+  plEmpty.textContent=plDay===7
+    ?'Nothing here yet — add what you do every single day above.'
+    :'Nothing planned for this day yet — add your routine above.';
+  items.forEach((it,ix)=>{
+    const done=isT&&plTicked(it.id);
+    const row=document.createElement('div');
+    row.className='plitem'+(done?' done':'');
+    row.innerHTML=`<div class="plchk ${done?'on':''} ${isT?'':'off'}" data-plchk="${ix}"
+        title="${isT?(done?'Mark not done':'Mark done'):'Ticks are only for today'}">${done?'✔':''}</div>
+      <input class="pltime" data-i="${ix}" value="${esc(it.time||'')}" placeholder="--:--" maxlength="10" title="Time (optional)">
+      <b class="plname" data-plname="${ix}" contenteditable="true" spellcheck="false" title="Tap to edit">${esc(it.title)}</b>
+      <span class="spacer"></span>
+      <button class="timerbtn" data-plmv="${ix}" data-dir="-1" ${ix===0?'disabled':''} title="Move up">▲</button>
+      <button class="timerbtn" data-plmv="${ix}" data-dir="1" ${ix===items.length-1?'disabled':''} title="Move down">▼</button>
+      <button class="danger" data-pldel="${ix}" title="Remove">🗑</button>`;
+    plList.appendChild(row);
+  });
+  const doneN=isT?items.filter(it=>plTicked(it.id)).length:0;
+  const pct=items.length?Math.round(doneN/items.length*100):0;
+  plProg.innerHTML=(isT&&items.length)?`
+    <div class="wbar" style="margin-top:12px"><i style="width:${pct}%"></i></div>
+    <div class="wbartxt">${doneN} of ${items.length} done today (${pct}%) — ticks reset at midnight</div>`:'';
+  renderTodo();
+}
+
+function renderTodo(){
+  const T=db.planner.todo;
+  todoList.innerHTML='';
+  todoEmpty.style.display=T.length?'none':'block';
+  // Open tasks first, completed at the bottom — original order kept inside each group.
+  T.map((t,i)=>i).sort((a,b)=>(T[a].done?1:0)-(T[b].done?1:0)).forEach(i=>{
+    const t=T[i];
+    const row=document.createElement('div');
+    row.className='plitem'+(t.done?' done':'');
+    row.innerHTML=`<div class="plchk ${t.done?'on':''}" data-tchk="${i}"
+        title="${t.done?'Mark not done':'Mark done'}">${t.done?'✔':''}</div>
+      <b class="plname" data-tname="${i}" contenteditable="true" spellcheck="false" title="Tap to edit">${esc(t.text)}</b>
+      ${t.date?`<span style="font-size:10px;color:var(--muted);white-space:nowrap">${jal(t.date,{day:'numeric',month:'short'})}</span>`:''}
+      <span class="spacer"></span>
+      <button class="danger" data-tdel="${i}" title="Delete task">🗑</button>`;
+    todoList.appendChild(row);
+  });
+  const dn=T.filter(t=>t.done).length;
+  todoFoot.style.display=T.length?'flex':'none';
+  todoCount.textContent=T.length?`${T.length-dn} open • ${dn} completed`:'';
+}
+
+plDays.onclick=e=>{const b=e.target.closest('[data-plday]');if(!b)return;
+  plDay=+b.dataset.plday;localStorage.setItem(PDKEY,plDay);renderPlanner();SFX.click();};
+
+plAdd.onclick=()=>{
+  const t=plTask.value.trim().slice(0,80);
+  if(!t){SFX.error();toast('⚠️ Enter a routine item.');return;}
+  plSel().push({id:uid(),time:plTime.value.trim().slice(0,10),title:t});
+  plTask.value='';plTime.value='';
+  save();renderPlanner();plTask.focus();SFX.add();
+};
+plTask.addEventListener('keydown',e=>{if(e.key==='Enter')plAdd.click();});
+plTime.addEventListener('keydown',e=>{if(e.key==='Enter')plTask.focus();});
+
+plList.addEventListener('click',e=>{
+  const chk=e.target.closest('[data-plchk]');
+  if(chk){
+    if(plDay!==7&&plDay!==wdToday()){SFX.error();toast('🔒 You can only tick today\'s routine.');return;}
+    const it=plSel()[+chk.dataset.plchk];if(!it)return;
+    const R=db.rlog[todayKey()]||(db.rlog[todayKey()]={});
+    if(R[it.id])delete R[it.id];else R[it.id]=true;
+    const now=!!R[it.id];save();
+    const allComplete=plSel().length&&plSel().every(x=>R[x.id]);
+    if(now&&allComplete){SFX.complete();toast('🎉 Routine complete for today!');}
+    else if(now)SFX.check();else SFX.uncheck();
+    renderPlanner();return;
+  }
+  const mv=e.target.closest('[data-plmv]');
+  if(mv){const a=+mv.dataset.plmv,b=a+ +mv.dataset.dir,L=plSel();
+    if(b<0||b>=L.length)return;
+    [L[a],L[b]]=[L[b],L[a]];save();renderPlanner();SFX.click();return;}
+  const d=e.target.closest('[data-pldel]');
+  if(d){const L=plSel(),ix=+d.dataset.pldel,it=L[ix];if(!it)return;
+    if(!confirm(`Remove "${it.title}" from ${plDay===7?'Every day':NAMES[plDay]}?`))return;
+    L.splice(ix,1);save();renderPlanner();SFX.delete();toast('🗑 Removed from routine');}
+});
+plList.addEventListener('input',e=>{
+  if(!e.target.classList.contains('pltime'))return;
+  const it=plSel()[+e.target.dataset.i];if(!it)return;
+  it.time=e.target.value.slice(0,10);save();
+});
+
+/* Inline renaming for routine items & tasks (same pattern as exercise names). */
+function inlineEdit(list,attr,getText,setText){
+  let before=null;
+  list.addEventListener('focusin',e=>{if(e.target.hasAttribute&&e.target.hasAttribute(attr))before=e.target.textContent;});
+  list.addEventListener('keydown',e=>{if(!e.target.hasAttribute||!e.target.hasAttribute(attr))return;
+    if(e.key==='Enter'){e.preventDefault();e.target.blur();}
+    if(e.key==='Escape'&&before!==null){e.target.textContent=before;e.target.blur();}});
+  list.addEventListener('focusout',e=>{
+    if(!e.target.hasAttribute||!e.target.hasAttribute(attr))return;
+    const ix=+e.target.getAttribute(attr);
+    if(Number.isNaN(ix))return;
+    const cur=getText(ix);
+    if(cur===null)return;                       /* row was deleted while editing */
+    const v=e.target.textContent.replace(/\s+/g,' ').trim();
+    if(!v){e.target.textContent=cur;SFX.error();toast('⚠️ Text cannot be empty.');return;}
+    if(v===cur){e.target.textContent=cur;return;}
+    setText(ix,v.slice(0,120));save();renderPlanner();SFX.add();
+  });
+}
+inlineEdit(plList,'data-plname',i=>plSel()[i]?plSel()[i].title:null,(i,v)=>plSel()[i].title=v);
+inlineEdit(todoList,'data-tname',i=>db.planner.todo[i]?db.planner.todo[i].text:null,(i,v)=>db.planner.todo[i].text=v);
+
+todoAdd.onclick=()=>{
+  const t=todoIn.value.trim().slice(0,120);
+  if(!t){SFX.error();toast('⚠️ Enter a task.');return;}
+  db.planner.todo.push({id:uid(),text:t,done:false,date:todayKey()});
+  todoIn.value='';save();renderTodo();todoIn.focus();SFX.add();
+};
+todoIn.addEventListener('keydown',e=>{if(e.key==='Enter')todoAdd.click();});
+
+todoList.addEventListener('click',e=>{
+  const chk=e.target.closest('[data-tchk]');
+  if(chk){const t=db.planner.todo[+chk.dataset.tchk];if(!t)return;
+    t.done=!t.done;save();renderTodo();
+    if(t.done&&db.planner.todo.length&&db.planner.todo.every(x=>x.done)){
+      SFX.complete();toast('🎉 All tasks completed!');}
+    else t.done?SFX.check():SFX.uncheck();
+    return;}
+  const d=e.target.closest('[data-tdel]');
+  if(d){const i=+d.dataset.tdel,t=db.planner.todo[i];if(!t)return;
+    if(!confirm(`Delete task "${t.text}"?`))return;
+    db.planner.todo.splice(i,1);save();renderTodo();SFX.delete();toast('🗑 Task deleted');}
+});
+todoClear.onclick=()=>{
+  const dn=db.planner.todo.filter(t=>t.done).length;
+  if(!dn){SFX.error();toast('⚠️ No completed tasks to clear.');return;}
+  if(!confirm(`Clear ${dn} completed task${dn>1?'s':''}?`))return;
+  db.planner.todo=db.planner.todo.filter(t=>!t.done);
+  save();renderTodo();SFX.delete();toast('🧹 Completed tasks cleared');
+};
+
 bindNag();paintNag();
 gcSnapshots();
-const BUILD='v12 • 2026-09-18';
+const BUILD='v14 • 2026-09-20';
 try{
   buildTag.textContent='Build '+BUILD;
   // Show only the file name, never the whole URL (preview links are huge tokens).
@@ -1564,5 +1833,5 @@ console.log('%cWorkout Tracker — Build '+BUILD+' — single file, no external 
 tick();setInterval(tick,1000);renderWeek();checkBackupNag();
 if(dbRecovered) setTimeout(()=>toast('⚠️ Saved data was unreadable — started fresh. A copy was kept.'),700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3cc572148ea2e10',t:'MTc4OTY5MjQ1Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3e32239dc6f3f45',t:'MTc4OTkzMTQ2Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
