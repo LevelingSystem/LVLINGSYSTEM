@@ -288,6 +288,7 @@
   .plitem .danger{padding:6px 9px;min-height:36px}
   .plitem .timerbtn{min-height:32px}
   #plDays .timerbtn{flex:1;min-width:0;padding:6px 2px;font-size:11px}
+  .plitem [data-ptime]{width:62px;flex:none;text-align:center;font-size:13px;opacity:.75}
 
   /* ===== timers ===== */
   #restBar{position:fixed;left:50%;transform:translateX(-50%) translateY(150%);
@@ -388,8 +389,10 @@
     </div>
     <div class="card">
       <div class="row">
-        <input id="plTime" placeholder="Time" inputmode="numeric" maxlength="10" style="width:84px" title="Optional, e.g. 06:30">
-        <input id="plTask" placeholder="Routine item (e.g. Gym, Read 30 min)" style="flex:1;min-width:140px">
+        <input id="plTime" placeholder="Time (opt.)" inputmode="numeric" maxlength="10" style="width:84px" title="Optional, e.g. 06:30"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next">
+        <input id="plTask" placeholder="Routine item (e.g. Gym, Read 30 min)" style="flex:1;min-width:140px"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="enter">
         <button id="plAdd">➕ Add</button>
       </div>
     </div>
@@ -403,7 +406,8 @@
       <div class="sechead">✅ Tasks</div>
       <div class="secnote">One-off things you need to get done — not tied to any weekday.</div>
       <div class="row">
-        <input id="todoIn" placeholder="New task (e.g. Buy protein powder)" style="flex:1;min-width:150px">
+        <input id="todoIn" placeholder="New task (e.g. Buy protein powder)" style="flex:1;min-width:150px"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="enter">
         <button id="todoAdd">➕ Add</button>
       </div>
     </div>
@@ -420,7 +424,8 @@
   <!-- ===== Notes: notebook list ===== -->
   <div id="nbList" class="hide">
     <div class="card row" style="gap:8px">
-      <input id="nbName" placeholder="Note title (e.g. Rules, Life, Diet)" style="flex:1;min-width:170px">
+      <input id="nbName" placeholder="Note title (e.g. Rules, Life, Diet)" style="flex:1;min-width:170px"
+        autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="enter">
       <button id="nbAdd">➕ Add note</button>
     </div>
     <div class="card row">
@@ -511,8 +516,9 @@
     <div class="card addcard">
       <div id="lockMsg"></div>
       <div class="row">
-        <input id="exName" placeholder="Exercise name (e.g. Push-ups)" style="flex:1;min-width:180px">
-        <input id="exCount" type="number" inputmode="numeric" min="0" placeholder="Amount" style="width:95px">
+        <input id="exName" placeholder="Exercise name (e.g. Push-ups)" style="flex:1;min-width:180px"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next">
+        <input id="exCount" type="number" inputmode="numeric" min="0" placeholder="Amount" style="width:95px" autocomplete="off" enterkeyhint="enter">
         <select id="exUnit" title="Unit">
           <option value="reps">reps</option>
           <option value="sec">seconds</option>
@@ -562,7 +568,8 @@
     <div class="grab"></div>
     <h3>✏️ Rename note</h3>
     <div class="who">Give this note a new title</div>
-    <input id="renInput" style="width:100%;font-size:16px" placeholder="Note title">
+    <input id="renInput" style="width:100%;font-size:16px" placeholder="Note title"
+        autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="enter">
     <div class="row" style="margin-top:12px;justify-content:space-between">
       <button class="ghost" id="renCancel">Cancel</button>
       <button id="renSave">💾 Save</button>
@@ -928,8 +935,8 @@ addBtn.onclick=()=>{
 };
 exUnit.onchange=()=>{const f=exUnit.value==='failure';
   exCount.disabled=f;exCount.style.opacity=f?.4:1;exCount.placeholder=f?'—':'Amount';};
-exName.addEventListener('keydown',e=>{if(e.key==='Enter')exCount.focus();});
-exCount.addEventListener('keydown',e=>{if(e.key==='Enter')addBtn.click();});
+exName.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)exCount.focus();});
+exCount.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)addBtn.click();});
 
 exList.addEventListener('click',e=>{
   const ren=e.target.closest('[data-ren]');
@@ -1004,7 +1011,7 @@ exList.addEventListener('focusin',e=>{
 });
 exList.addEventListener('keydown',e=>{
   if(!e.target.classList.contains('exname'))return;
-  if(e.key==='Enter'){e.preventDefault();e.target.blur();}
+  if(e.key==='Enter'&&!e.isComposing){e.preventDefault();e.target.blur();}
   if(e.key==='Escape'){e.target.textContent=nameBefore;e.target.blur();}
 });
 exList.addEventListener('focusout',e=>{
@@ -1605,7 +1612,7 @@ renSave.onclick=()=>{
 };
 renCancel.onclick=()=>{closeRen();SFX.back();};
 renModal.addEventListener('click',e=>{if(e.target===renModal){closeRen();SFX.back();}});
-renInput.addEventListener('keydown',e=>{if(e.key==='Enter')renSave.click();});
+renInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)renSave.click();});
 
 nbAdd.onclick=()=>{
   const t=nbName.value.trim();
@@ -1613,7 +1620,7 @@ nbAdd.onclick=()=>{
   db.notes.push({title:t,body:'',icon:ICONS[db.notes.length%ICONS.length],date:todayKey()});
   nbName.value='';save();renderNotes();SFX.add();toast('📒 Note "'+t+'" created');
 };
-nbName.addEventListener('keydown',e=>{if(e.key==='Enter')nbAdd.click();});
+nbName.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)nbAdd.click();});
 nbSearch.addEventListener('input',renderNotes);
 
 function openNb(i){
@@ -1656,6 +1663,7 @@ let plDay=(()=>{const raw=localStorage.getItem(PDKEY);
   const v=+raw; return (v>=0&&v<=7)?v:wdToday();})();
 const plSel=()=>plDay===7?(db.planner.daily||(db.planner.daily=[]))
                         :(db.planner.days[plDay]||(db.planner.days[plDay]=[]));
+let timeEditIx=null;   // row whose ⏰ was tapped — its time input stays open
 function gcRlog(){
   const t=todayKey();let dirty=false;
   for(const k in db.rlog) if(k!==t){delete db.rlog[k];dirty=true;}
@@ -1687,7 +1695,10 @@ function renderPlanner(){
     row.className='plitem'+(done?' done':'');
     row.innerHTML=`<div class="plchk ${done?'on':''} ${isT?'':'off'}" data-plchk="${ix}"
         title="${isT?(done?'Mark not done':'Mark done'):'Ticks are only for today'}">${done?'✔':''}</div>
-      <input class="pltime" data-i="${ix}" value="${esc(it.time||'')}" placeholder="--:--" maxlength="10" title="Time (optional)">
+      ${(it.time||timeEditIx===ix)
+        ?`<input class="pltime" data-i="${ix}" value="${esc(it.time||'')}" placeholder="--:--" maxlength="10"
+            autocomplete="off" spellcheck="false" enterkeyhint="done" title="Time">`
+        :`<button class="timerbtn" data-ptime="${ix}" title="Add time">⏰</button>`}
       <b class="plname" data-plname="${ix}" contenteditable="true" spellcheck="false" title="Tap to edit">${esc(it.title)}</b>
       <span class="spacer"></span>
       <button class="timerbtn" data-plmv="${ix}" data-dir="-1" ${ix===0?'disabled':''} title="Move up">▲</button>
@@ -1715,7 +1726,6 @@ function renderTodo(){
     row.innerHTML=`<div class="plchk ${t.done?'on':''}" data-tchk="${i}"
         title="${t.done?'Mark not done':'Mark done'}">${t.done?'✔':''}</div>
       <b class="plname" data-tname="${i}" contenteditable="true" spellcheck="false" title="Tap to edit">${esc(t.text)}</b>
-      ${t.date?`<span style="font-size:10px;color:var(--muted);white-space:nowrap">${jal(t.date,{day:'numeric',month:'short'})}</span>`:''}
       <span class="spacer"></span>
       <button class="danger" data-tdel="${i}" title="Delete task">🗑</button>`;
     todoList.appendChild(row);
@@ -1726,17 +1736,17 @@ function renderTodo(){
 }
 
 plDays.onclick=e=>{const b=e.target.closest('[data-plday]');if(!b)return;
-  plDay=+b.dataset.plday;localStorage.setItem(PDKEY,plDay);renderPlanner();SFX.click();};
+  plDay=+b.dataset.plday;localStorage.setItem(PDKEY,plDay);timeEditIx=null;renderPlanner();SFX.click();};
 
 plAdd.onclick=()=>{
   const t=plTask.value.trim().slice(0,80);
   if(!t){SFX.error();toast('⚠️ Enter a routine item.');return;}
   plSel().push({id:uid(),time:plTime.value.trim().slice(0,10),title:t});
-  plTask.value='';plTime.value='';
+  plTask.value='';plTime.value='';timeEditIx=null;
   save();renderPlanner();plTask.focus();SFX.add();
 };
-plTask.addEventListener('keydown',e=>{if(e.key==='Enter')plAdd.click();});
-plTime.addEventListener('keydown',e=>{if(e.key==='Enter')plTask.focus();});
+plTask.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)plAdd.click();});
+plTime.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)plTask.focus();});
 
 plList.addEventListener('click',e=>{
   const chk=e.target.closest('[data-plchk]');
@@ -1751,6 +1761,11 @@ plList.addEventListener('click',e=>{
     else if(now)SFX.check();else SFX.uncheck();
     renderPlanner();return;
   }
+  const pt=e.target.closest('[data-ptime]');
+  if(pt){timeEditIx=+pt.dataset.ptime;renderPlanner();
+    const inp=plList.querySelector(`.pltime[data-i="${timeEditIx}"]`);
+    if(inp){inp.focus();inp.select();}
+    return;}
   const mv=e.target.closest('[data-plmv]');
   if(mv){const a=+mv.dataset.plmv,b=a+ +mv.dataset.dir,L=plSel();
     if(b<0||b>=L.length)return;
@@ -1765,13 +1780,18 @@ plList.addEventListener('input',e=>{
   const it=plSel()[+e.target.dataset.i];if(!it)return;
   it.time=e.target.value.slice(0,10);save();
 });
+plList.addEventListener('change',e=>{
+  if(!e.target.classList.contains('pltime'))return;
+  timeEditIx=null;
+  renderPlanner();          // clear time -> the box collapses back to ⏰
+});
 
 /* Inline renaming for routine items & tasks (same pattern as exercise names). */
 function inlineEdit(list,attr,getText,setText){
   let before=null;
   list.addEventListener('focusin',e=>{if(e.target.hasAttribute&&e.target.hasAttribute(attr))before=e.target.textContent;});
   list.addEventListener('keydown',e=>{if(!e.target.hasAttribute||!e.target.hasAttribute(attr))return;
-    if(e.key==='Enter'){e.preventDefault();e.target.blur();}
+    if(e.key==='Enter'&&!e.isComposing){e.preventDefault();e.target.blur();}
     if(e.key==='Escape'&&before!==null){e.target.textContent=before;e.target.blur();}});
   list.addEventListener('focusout',e=>{
     if(!e.target.hasAttribute||!e.target.hasAttribute(attr))return;
@@ -1791,10 +1811,10 @@ inlineEdit(todoList,'data-tname',i=>db.planner.todo[i]?db.planner.todo[i].text:n
 todoAdd.onclick=()=>{
   const t=todoIn.value.trim().slice(0,120);
   if(!t){SFX.error();toast('⚠️ Enter a task.');return;}
-  db.planner.todo.push({id:uid(),text:t,done:false,date:todayKey()});
+  db.planner.todo.push({id:uid(),text:t,done:false});
   todoIn.value='';save();renderTodo();todoIn.focus();SFX.add();
 };
-todoIn.addEventListener('keydown',e=>{if(e.key==='Enter')todoAdd.click();});
+todoIn.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)todoAdd.click();});
 
 todoList.addEventListener('click',e=>{
   const chk=e.target.closest('[data-tchk]');
@@ -1819,7 +1839,7 @@ todoClear.onclick=()=>{
 
 bindNag();paintNag();
 gcSnapshots();
-const BUILD='v14 • 2026-09-20';
+const BUILD='v15 • 2026-09-20';
 try{
   buildTag.textContent='Build '+BUILD;
   // Show only the file name, never the whole URL (preview links are huge tokens).
@@ -1833,5 +1853,5 @@ console.log('%cWorkout Tracker — Build '+BUILD+' — single file, no external 
 tick();setInterval(tick,1000);renderWeek();checkBackupNag();
 if(dbRecovered) setTimeout(()=>toast('⚠️ Saved data was unreadable — started fresh. A copy was kept.'),700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3e32239dc6f3f45',t:'MTc4OTkzMTQ2Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3e36838cf53fb58',t:'MTc4OTkzNDMyOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
