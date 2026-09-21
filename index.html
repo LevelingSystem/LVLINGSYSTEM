@@ -301,6 +301,14 @@
     .plitem .danger{order:6}
   }
 
+  /* ===== water tracker ===== */
+  #wtDrops{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;cursor:default}
+  .wtdrop{font-size:20px;line-height:1;filter:grayscale(1);opacity:.3;cursor:pointer;
+    transition:transform .12s,opacity .12s;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+  .wtdrop.on{filter:none;opacity:1}
+  .wtdrop:active{transform:scale(.8)}
+  #wtBar{margin-top:12px}
+
   /* ===== timers ===== */
   #restBar{position:fixed;left:50%;transform:translateX(-50%) translateY(150%);
     bottom:calc(16px + env(safe-area-inset-bottom));z-index:190;width:min(420px,92vw);
@@ -413,6 +421,31 @@
       <div class="empty" id="plEmpty">Nothing planned for this day yet — add your routine above.</div>
       <div id="plProg"></div>
     </div>
+
+    <!-- ===== Water tracker ===== -->
+    <div class="card">
+      <div class="sechead">💧 Water tracker</div>
+      <div class="row" style="justify-content:space-between;flex-wrap:nowrap">
+        <div class="row" style="gap:8px;flex-wrap:nowrap;align-items:baseline">
+          <b id="wtNum" style="font-size:26px;color:var(--accent);min-width:20px;text-align:center">0</b>
+          <span style="font-size:12px;color:var(--muted)">of <b id="wtGoalTxt">8</b> cups today</span>
+        </div>
+        <div class="row" style="gap:8px;flex-wrap:nowrap">
+          <button class="timerbtn" id="wtMinus" title="Remove a cup" style="width:46px">−</button>
+          <button id="wtPlus" title="Add a cup" style="padding:9px 14px">💧 Add cup</button>
+        </div>
+      </div>
+      <div id="wtDrops"></div>
+      <div id="wtBar"></div>
+      <div class="row" style="margin-top:10px;justify-content:space-between;flex-wrap:nowrap">
+        <span style="font-size:11px;color:var(--muted)">Goal (cups per day):</span>
+        <div class="row" style="gap:6px;flex-wrap:nowrap">
+          <button class="timerbtn" id="wtGoalDown" data-nosfx="1">−</button>
+          <button class="timerbtn" id="wtGoalUp" data-nosfx="1">+</button>
+        </div>
+      </div>
+    </div>
+
     <div class="card">
       <div class="sechead">✅ Tasks</div>
       <div class="secnote">One-off things you need to get done — not tied to any weekday.</div>
@@ -640,7 +673,7 @@ document.addEventListener('pointerdown',e=>{
 
 const KEY='workout_program_v3';
 const BLANK=()=>({plan:[[],[],[],[],[],[],[]],log:{},snap:{},prs:{},notes:[],
-  planner:{days:[[],[],[],[],[],[],[]],todo:[],daily:[]},rlog:{}});
+  planner:{days:[[],[],[],[],[],[],[]],todo:[],daily:[]},rlog:{},water:{goal:8,log:{}}});
 /* Never let damaged storage white-screen the app. If the saved data cannot be
    parsed we keep a copy under a rescue key (so nothing is silently destroyed)
    and start from a clean slate instead of throwing. */
@@ -685,6 +718,10 @@ db.planner.todo.forEach(t=>{
   t.date=t.date||'';
 });
 if(!db.rlog||typeof db.rlog!=='object'||Array.isArray(db.rlog))db.rlog={};
+/* Water tracker was added in v17 — old saves simply don't have it. */
+if(!db.water||typeof db.water!=='object'||Array.isArray(db.water))db.water={goal:8,log:{}};
+db.water.goal=Math.min(30,Math.max(1,Math.floor(+db.water.goal)||8));
+if(!db.water.log||typeof db.water.log!=='object'||Array.isArray(db.water.log))db.water.log={};
 // Repair any out-of-range values written by an older build.
 db.plan.forEach(d=>d.forEach(e=>{
   e.sets  = Math.min(50,Math.max(1,Math.floor(+e.sets)||1));
@@ -825,7 +862,7 @@ function streaks(){
 function tick(){const p=iranNow();
   clock.textContent=`⏱ ${jal(todayKey(),{weekday:'long',day:'numeric',month:'long',year:'numeric'})} — ${p.hour}:${p.minute}:${p.second} Tehran time`;
   if(tick.last&&tick.last!==todayKey()){renderWeek();if(current!==null)renderDay();
-    gcRlog();if(!plView.classList.contains('hide'))renderPlanner();}
+    gcRlog();gcWater();if(!plView.classList.contains('hide'))renderPlanner();}
   tick.last=todayKey();}
 
 function renderWeek(){
@@ -1092,6 +1129,9 @@ fileIn.onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileRea
     if(!Array.isArray(db.planner.todo))db.planner.todo=[];
     if(!Array.isArray(db.planner.daily))db.planner.daily=[];
     if(!db.rlog||typeof db.rlog!=='object')db.rlog={};
+    if(!db.water||typeof db.water!=='object'||Array.isArray(db.water))db.water={goal:8,log:{}};
+    db.water.goal=Math.min(30,Math.max(1,Math.floor(+db.water.goal)||8));
+    if(!db.water.log||typeof db.water.log!=='object')db.water.log={};
     save();renderWeek();renderNotes();toast('📥 Backup restored');
   }catch{SFX.error();toast('⚠️ Invalid file');}};
   r.readAsText(f);};
@@ -1555,14 +1595,14 @@ let armLog=false,armAll=false;
 resetLog.onclick=()=>{
   if(!armLog){armLog=true;resetLog.textContent='🔄 Tap again to reset progress';SFX.error();
     clearTimeout(resetLog.t);resetLog.t=setTimeout(()=>{armLog=false;resetLog.textContent='🔄 Reset progress & streaks only';},3200);return;}
-  db.log={};db.snap={};db.rlog={};armLog=false;resetLog.textContent='🔄 Reset progress & streaks only';
+  db.log={};db.snap={};db.rlog={};db.water.log={};armLog=false;resetLog.textContent='🔄 Reset progress & streaks only';
   save();SFX.delete();toast('🔄 Progress and streaks cleared');
 };
 resetAll.onclick=()=>{
   if(!armAll){armAll=true;resetAll.textContent='🗑 Tap again to ERASE EVERYTHING';SFX.error();
     clearTimeout(resetAll.t);resetAll.t=setTimeout(()=>{armAll=false;resetAll.textContent='🗑 Erase everything (plan, notes, records)';},3500);return;}
   db={plan:[[],[],[],[],[],[],[]],log:{},snap:{},prs:{},notes:[],
-    planner:{days:[[],[],[],[],[],[],[]],todo:[],daily:[]},rlog:{}};
+    planner:{days:[[],[],[],[],[],[],[]],todo:[],daily:[]},rlog:{},water:{goal:8,log:{}}};
   armAll=false;resetAll.textContent='🗑 Erase everything (plan, notes, records)';
   save();SFX.delete();toast('🗑 Everything has been erased');
 };
@@ -1682,8 +1722,52 @@ function gcRlog(){
 }
 const plTicked=id=>{const R=db.rlog[todayKey()];return !!(R&&R[id]);};
 
+/* ===== Water tracker =====
+   Count lives in db.water.log[date] so every day starts at zero, like the
+   routine ticks; the daily goal (db.water.goal) survives across days. */
+const wGoal=()=>Math.min(30,Math.max(1,Math.floor(+db.water.goal)||8));
+const wNow =()=>Math.min(99,Math.max(0,Math.floor(db.water.log[todayKey()])||0));
+function gcWater(){
+  const t=todayKey();let dirty=false;
+  for(const k in db.water.log) if(k!==t){delete db.water.log[k];dirty=true;}
+  if(dirty)save();
+}
+function wSet(n){db.water.log[todayKey()]=Math.min(99,Math.max(0,Math.floor(n)||0));save();}
+function renderWater(){
+  gcWater();
+  const g=wGoal(),c=wNow();
+  wtNum.textContent=c;
+  wtGoalTxt.textContent=g;
+  wtDrops.innerHTML=Array.from({length:g},(_,i)=>
+    `<span class="wtdrop ${i<c?'on':''}" data-wtd="${i}" title="${i+1} cup${i?'s':''}">💧</span>`).join('');
+  const pct=Math.min(100,Math.round(c/g*100));
+  wtBar.innerHTML=`<div class="wbar"><i style="width:${pct}%"></i></div>
+    <div class="wbartxt">${pct}% of today's water goal — resets at midnight</div>`;
+}
+function wCheer(before,after){
+  const g=wGoal();
+  if(before<g&&after>=g){SFX.complete();
+    if(navigator.vibrate)navigator.vibrate([25,60,25,60,45]);
+    toast('💧 Water goal reached — well hydrated!');}
+  else if(after>before)SFX.check();
+  else if(after<before)SFX.uncheck();
+}
+wtPlus.onclick=()=>{const b=wNow();if(b>=99){SFX.error();return;}
+  wSet(b+1);renderWater();wCheer(b,b+1);};
+wtMinus.onclick=()=>{const b=wNow();if(!b){SFX.error();return;}
+  wSet(b-1);renderWater();SFX.uncheck();};
+/* Tap a drop to fill up to it; tap the last filled one again to undo it. */
+wtDrops.onclick=e=>{
+  const d=e.target.closest('[data-wtd]');if(!d)return;
+  const i=+d.dataset.wtd,b=wNow();
+  const after=(i+1===b)?i:i+1;
+  wSet(after);renderWater();wCheer(b,after);
+};
+wtGoalUp.onclick=()=>{db.water.goal=Math.min(30,wGoal()+1);save();renderWater();SFX.click();};
+wtGoalDown.onclick=()=>{db.water.goal=Math.max(1,wGoal()-1);save();renderWater();SFX.click();};
+
 function renderPlanner(){
-  gcRlog();
+  gcRlog();renderWater();
   const isT=plDay===7?true:plDay===wdToday(), items=plSel();
   plDays.innerHTML=
     `<button class="timerbtn ${plDay===7?'run':''}" data-plday="7" data-nosfx="1"
@@ -1850,7 +1934,7 @@ todoClear.onclick=()=>{
 
 bindNag();paintNag();
 gcSnapshots();
-const BUILD='v16 • 2026-09-20';
+const BUILD='v17 • 2026-09-20';
 try{
   buildTag.textContent='Build '+BUILD;
   // Show only the file name, never the whole URL (preview links are huge tokens).
@@ -1864,5 +1948,5 @@ console.log('%cWorkout Tracker — Build '+BUILD+' — single file, no external 
 tick();setInterval(tick,1000);renderWeek();checkBackupNag();
 if(dbRecovered) setTimeout(()=>toast('⚠️ Saved data was unreadable — started fresh. A copy was kept.'),700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3e383535a0be0de',t:'MTc4OTkzNTQzOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>

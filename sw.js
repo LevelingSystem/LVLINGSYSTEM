@@ -1,11 +1,11 @@
 /* Weekly Workout Tracker — offline service worker
-   Build v16 • 2026-09-20
+   Build v17 • 2026-09-20
 
    Upload this file NEXT TO index.html (same folder) on GitHub Pages.
    The whole app is a single HTML file, so we only need to cache the document
    itself. Everything else (icons, styles, scripts) is already inlined.        */
 
-const CACHE = 'workout-v16';
+const CACHE = 'workout-v17';
 
 /* Install: pre-cache the app shell, then take over immediately. */
 self.addEventListener('install', e => {
