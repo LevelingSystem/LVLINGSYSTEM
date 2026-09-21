@@ -1726,13 +1726,13 @@ const plTicked=id=>{const R=db.rlog[todayKey()];return !!(R&&R[id]);};
    Count lives in db.water.log[date] so every day starts at zero, like the
    routine ticks; the daily goal (db.water.goal) survives across days. */
 const wGoal=()=>Math.min(30,Math.max(1,Math.floor(+db.water.goal)||8));
-const wNow =()=>Math.min(99,Math.max(0,Math.floor(db.water.log[todayKey()])||0));
+const wNow =()=>Math.min(wGoal(),Math.max(0,Math.floor(db.water.log[todayKey()])||0));
 function gcWater(){
   const t=todayKey();let dirty=false;
   for(const k in db.water.log) if(k!==t){delete db.water.log[k];dirty=true;}
   if(dirty)save();
 }
-function wSet(n){db.water.log[todayKey()]=Math.min(99,Math.max(0,Math.floor(n)||0));save();}
+function wSet(n){db.water.log[todayKey()]=Math.min(wGoal(),Math.max(0,Math.floor(n)||0));save();}
 function renderWater(){
   gcWater();
   const g=wGoal(),c=wNow();
@@ -1752,7 +1752,9 @@ function wCheer(before,after){
   else if(after>before)SFX.check();
   else if(after<before)SFX.uncheck();
 }
-wtPlus.onclick=()=>{const b=wNow();if(b>=99){SFX.error();return;}
+/* Never past the goal — more than your target is not an option. */
+wtPlus.onclick=()=>{const b=wNow();
+  if(b>=wGoal()){SFX.error();toast('💧 Daily goal reached — enough water for today!');return;}
   wSet(b+1);renderWater();wCheer(b,b+1);};
 wtMinus.onclick=()=>{const b=wNow();if(!b){SFX.error();return;}
   wSet(b-1);renderWater();SFX.uncheck();};
@@ -1764,7 +1766,9 @@ wtDrops.onclick=e=>{
   wSet(after);renderWater();wCheer(b,after);
 };
 wtGoalUp.onclick=()=>{db.water.goal=Math.min(30,wGoal()+1);save();renderWater();SFX.click();};
-wtGoalDown.onclick=()=>{db.water.goal=Math.max(1,wGoal()-1);save();renderWater();SFX.click();};
+wtGoalDown.onclick=()=>{db.water.goal=Math.max(1,wGoal()-1);
+  if(wNow()>db.water.goal)db.water.log[todayKey()]=db.water.goal;
+  save();renderWater();SFX.click();};
 
 function renderPlanner(){
   gcRlog();renderWater();
@@ -1934,7 +1938,7 @@ todoClear.onclick=()=>{
 
 bindNag();paintNag();
 gcSnapshots();
-const BUILD='v17 • 2026-09-20';
+const BUILD='v18 • 2026-09-20';
 try{
   buildTag.textContent='Build '+BUILD;
   // Show only the file name, never the whole URL (preview links are huge tokens).
@@ -1948,5 +1952,5 @@ console.log('%cWorkout Tracker — Build '+BUILD+' — single file, no external 
 tick();setInterval(tick,1000);renderWeek();checkBackupNag();
 if(dbRecovered) setTimeout(()=>toast('⚠️ Saved data was unreadable — started fresh. A copy was kept.'),700);
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a3e742c57ea2370a',t:'MTc4OTk3NDczOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
