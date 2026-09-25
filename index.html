@@ -792,6 +792,12 @@ function amount(e){ // human readable amount for one set
 }
 const unitOpts=u=>Object.entries(UNITS).map(([k,v])=>
   `<option value="${k}" ${u===k?'selected':''}>${v}</option>`).join('');
+/* A "to failure" exercise has no fixed unit, but its RECORD still needs one:
+   plank -> minutes, hangs -> seconds, a max-distance hold -> m/km, etc. */
+const PRUNITS={reps:'reps',sec:'sec',min:'min',hrs:'hrs',m:'m',km:'km',kg:'kg'};
+const prUnitLbl=e=>isFail(e)?(PRUNITS[e.prUnit]||'reps'):UNITS[unitOf(e)];
+const prUnitOpts=u=>Object.entries(PRUNITS).map(([k,v])=>
+  `<option value="${k}" ${u===k?'selected':''}>${v}</option>`).join('');
 
 /* ===== Streaks ===== */
 const shiftKey=(k,n)=>{const d=toUTC(k);d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);};
@@ -822,7 +828,7 @@ function syncSnapshots(ex){
   for(const k in db.snap){
     const it=db.snap[k].find(e=>e.id===ex.id);
     if(!it)continue;
-    it.pr=ex.pr; it.prDate=ex.prDate; it.note=ex.note;
+    it.pr=ex.pr; it.prDate=ex.prDate; it.note=ex.note; it.prUnit=ex.prUnit;
   }
 }
 
@@ -943,7 +949,11 @@ function renderDay(){
       <div class="recbox">
         <span class="reclbl">🏅 Record:</span>
         <input type="number" inputmode="numeric" min="0" value="${pr||''}" placeholder="—" style="width:70px" data-i="${ix}" data-f="pr" title="Personal best">
-        <span class="unit">${isFail(e)?'reps (best attempt)':UNITS[unitOf(e)]}</span>
+        ${isFail(e)
+          ?`<select data-i="${ix}" data-f="prUnit" title="Record unit"
+              style="border:none;background:transparent;padding:5px 2px;min-height:0;font-size:11px;color:var(--muted);max-width:76px"
+              >${prUnitOpts(PRUNITS[e.prUnit]?e.prUnit:'reps')}</select>`
+          :`<span class="unit">${UNITS[unitOf(e)]}</span>`}
         ${e.prDate?`<span class="recdate">📅 ${jal(e.prDate,{day:'numeric',month:'short',year:'numeric'})}</span>`:''}
         ${(()=>{const h=(db.prs||{})[e.name.trim()]||[];
           if(h.length<2)return '';
@@ -1093,6 +1103,7 @@ exList.addEventListener('input',e=>{
   const i=e.target.dataset.i;if(i===undefined)return;
   const ex=plan(current)[i], f=e.target.dataset.f;
   if(f==='unit'){ex.unit=e.target.value;if(ex.unit==='failure')ex.count=0;save();renderDay();return;}
+  if(f==='prUnit'){ex.prUnit=PRUNITS[e.target.value]?e.target.value:'reps';syncSnapshots(ex);save();renderDay();return;}
   ex[f] = f==='sets' ? clampSets(e.target.value)
         : f==='count'? clampAmt(e.target.value)
         : Math.max(0,Math.min(100000,+e.target.value||0));
@@ -1108,7 +1119,7 @@ exList.addEventListener('change',e=>{
       const h=db.prs[ex.name.trim()]=db.prs[ex.name.trim()]||[];
       if(!h.length||h[h.length-1].v!==now){h.push({v:now,date:todayKey()});save();}
       SFX.record(); if(navigator.vibrate)navigator.vibrate([20,50,20,50,40]);
-      toast(`🏅 New record for ${ex.name}: ${now} ${isFail(ex)?'reps':UNITS[unitOf(ex)]} (was ${was||'—'})`);
+      toast(`🏅 New record for ${ex.name}: ${now} ${prUnitLbl(ex)} (was ${was||'—'})`);
     }
     prBefore=null;
   }
@@ -1401,7 +1412,7 @@ function renderReport(){
     return `<div class="rex" style="display:block">
       <div style="display:flex;justify-content:space-between;gap:10px">
         <span>${esc(e.name)}${live?'':' <span class="tag" style="font-size:9px">retired</span>'}</span>
-        <span class="rq">🏅 ${e.pr} ${isFail(e)?'reps':UNITS[unitOf(e)]}${e.prDate?' • '+jal(e.prDate,{day:'numeric',month:'short',year:'numeric'}):''}</span>
+        <span class="rq">🏅 ${e.pr} ${prUnitLbl(e)}${e.prDate?' • '+jal(e.prDate,{day:'numeric',month:'short',year:'numeric'}):''}</span>
       </div>
       ${spark}
       ${first!==null?`<div class="rq" style="margin-top:3px">📈 ${first} → ${e.pr} (+${e.pr-first}) over ${h.length} updates</div>`:''}
@@ -1446,7 +1457,7 @@ function renderRepDay(){
         </span>
       </div>
       <div class="mdots">${dots}</div>
-      ${+e.pr?`<div class="rq" style="margin-top:4px">🏅 Record: ${e.pr} ${isFail(e)?'reps':UNITS[unitOf(e)]}${e.prDate?' • '+jal(e.prDate,{day:'numeric',month:'short',year:'numeric'}):''}</div>`:''}
+      ${+e.pr?`<div class="rq" style="margin-top:4px">🏅 Record: ${e.pr} ${prUnitLbl(e)}${e.prDate?' • '+jal(e.prDate,{day:'numeric',month:'short',year:'numeric'}):''}</div>`:''}
     </div>`;
   }).join('');
   const pct=ts?Math.round(ds/ts*100):0;
@@ -1977,7 +1988,7 @@ todoClear.onclick=()=>{
 
 bindNag();paintNag();
 gcSnapshots();
-const BUILD='v19 • 2026-09-20';
+const BUILD='v20 • 2026-09-20';
 try{
   buildTag.textContent='Build '+BUILD;
   // Show only the file name, never the whole URL (preview links are huge tokens).
@@ -1991,5 +2002,6 @@ console.log('%cWorkout Tracker — Build '+BUILD+' — single file, no external 
 tick();setInterval(tick,1000);renderWeek();checkBackupNag();
 if(dbRecovered) setTimeout(()=>toast('⚠️ Saved data was unreadable — started fresh. A copy was kept.'),700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a40452413ce7b39b',t:'MTc5MDI3OTQ2MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a409a33048d6d0c7',t:'MTc5MDMzNTIwMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","spa":2}' crossorigin="anonymous"></script>
+</body>
 </html>
