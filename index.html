@@ -204,7 +204,7 @@
   .tabs{display:flex;gap:8px;margin-bottom:14px;background:var(--card);border:1px solid var(--line);
     border-radius:14px;padding:5px}
   .tabs button{flex:1;background:transparent;color:var(--muted);font-weight:bold;min-height:42px;border-radius:10px;font-size:13px;padding:6px 4px;white-space:nowrap}
-  @media(max-width:480px){.tabs{gap:3px;padding:4px}.tabs button{font-size:10.5px;padding:6px 2px}}
+  @media(max-width:480px){.tabs{gap:3px;padding:4px;flex-wrap:wrap}.tabs button{font-size:10.5px;padding:6px 2px;flex:1 1 30%}}
   .tabs button.on{background:var(--btn);color:var(--btnTxt)}
   .nbgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
   @media(max-width:560px){.nbgrid{grid-template-columns:1fr 1fr}}
@@ -309,6 +309,13 @@
   .wtdrop:active{transform:scale(.8)}
   #wtBar{margin-top:12px}
 
+  /* ===== counters ===== */
+  .ctr{padding:10px 0;border-bottom:1px solid var(--line)}
+  .ctr:last-child{border:none;padding-bottom:0}
+  .ctr:first-child{padding-top:0}
+  .ctrchips{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+  .ctr .plname{flex:1 1 120px;min-width:0}
+
   /* ===== timers ===== */
   #restBar{position:fixed;left:50%;transform:translateX(-50%) translateY(150%);
     bottom:calc(16px + env(safe-area-inset-bottom));z-index:190;width:min(420px,92vw);
@@ -363,6 +370,7 @@
     <button id="tabWorkout" class="on" data-nosfx="1">🏋️ Workout</button>
     <button id="tabReport" data-nosfx="1">📊 Report</button>
     <button id="tabPlanner" data-nosfx="1">📅 Planner</button>
+    <button id="tabCounters" data-nosfx="1">🔢 Counters</button>
     <button id="tabNotes" data-nosfx="1">📒 Notes</button>
     <button id="tabSettings" data-nosfx="1">⚙️ Settings</button>
   </div>
@@ -468,6 +476,37 @@
         <button class="ghost" id="todoClear" data-nosfx="1" style="min-height:36px;padding:6px 12px;font-size:12px">🧹 Clear completed</button>
       </div>
     </div>
+  </div>
+
+  <!-- ===== Counters: their own tab (moved out of Planner in v23) ===== -->
+  <div id="ctView" class="hide">
+    <!-- ===== Rep counters ===== -->
+    <div class="card">
+      <div class="sechead">🔢 Counters</div>
+      <div class="secnote">Tally anything — pull-ups, push-ups or time (plank, laps). Tap each milestone yourself
+        as you reach it, or pick a ⏱ timer and they tick off by themselves. 🔄 starts over.</div>
+      <div class="row">
+        <input id="ctName" placeholder="Name (e.g. Pull-ups)" style="flex:1;min-width:130px"
+          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next">
+        <input id="ctStep" type="number" inputmode="numeric" min="1" placeholder="Step" style="width:80px"
+          title="e.g. 10" autocomplete="off" enterkeyhint="next">
+        <input id="ctTarget" type="number" inputmode="numeric" min="1" placeholder="Target" style="width:88px"
+          title="e.g. 100" autocomplete="off" enterkeyhint="enter">
+        <select id="ctType" style="width:112px" title="Count reps, tap time milestones yourself, or run a live timer">
+          <option value="count">Reps</option>
+          <option value="sec">Sec (tap)</option>
+          <option value="min">Min (tap)</option>
+          <option value="secLive">⏱ Sec timer</option>
+          <option value="minLive">⏱ Min timer</option>
+        </select>
+        <button id="ctAdd">➕ Add</button>
+      </div>
+    </div>
+    <div class="card">
+      <div id="ctList"></div>
+      <div class="empty" id="ctEmpty">No counters yet — add one above (e.g. Pull-ups every 10 up to 40, or a ⏱ plank timer).</div>
+    </div>
+
   </div>
 
   <!-- ===== Notes: notebook list ===== -->
@@ -678,7 +717,7 @@ document.addEventListener('pointerdown',e=>{
 
 const KEY='workout_program_v3';
 const BLANK=()=>({plan:[[],[],[],[],[],[],[]],log:{},snap:{},prs:{},notes:[],
-  planner:{days:[[],[],[],[],[],[],[]],todo:[],daily:[]},rlog:{},water:{goal:8,log:{}}});
+  planner:{days:[[],[],[],[],[],[],[]],todo:[],daily:[]},rlog:{},water:{goal:8,log:{}},counters:[]});
 /* Never let damaged storage white-screen the app. If the saved data cannot be
    parsed we keep a copy under a rescue key (so nothing is silently destroyed)
    and start from a clean slate instead of throwing. */
@@ -727,6 +766,22 @@ if(!db.rlog||typeof db.rlog!=='object'||Array.isArray(db.rlog))db.rlog={};
 if(!db.water||typeof db.water!=='object'||Array.isArray(db.water))db.water={goal:8,log:{}};
 db.water.goal=Math.min(30,Math.max(1,Math.floor(+db.water.goal)||8));
 if(!db.water.log||typeof db.water.log!=='object'||Array.isArray(db.water.log))db.water.log={};
+/* Counters were added in v21 — old saves simply don't have them. */
+if(!Array.isArray(db.counters))db.counters=[];
+db.counters=db.counters.filter(c=>c&&typeof c==='object');
+db.counters.forEach(c=>{
+  c.id=c.id||(Math.random().toString(36).slice(2,9));
+  c.name=String(c.name==null?'Counter':c.name).slice(0,40);
+  c.step=Math.min(100000,Math.max(1,Math.floor(+c.step)||10));
+  c.target=Math.min(100000,Math.max(c.step,Math.floor(+c.target)||c.step));
+  if(!c.marks||typeof c.marks!=='object'||Array.isArray(c.marks))c.marks={};
+  /* v22: time counters — unknown units fall back to plain reps, timers sanitized */
+  c.unit=(c.unit==='sec'||c.unit==='min')?c.unit:'count';
+  c.live=(c.live===true);   /* junk truthy strings don't make a timer */
+  if(!c.t||typeof c.t!=='object'||Array.isArray(c.t))c.t=null;
+  else{c.t.base=Math.min(864000000,Math.max(0,+c.t.base||0));c.t.start=Math.max(0,+c.t.start||0);
+    if(!c.t.base&&!c.t.start)c.t=null;}
+});
 // Repair any out-of-range values written by an older build.
 db.plan.forEach(d=>d.forEach(e=>{
   e.sets  = Math.min(50,Math.max(1,Math.floor(+e.sets)||1));
@@ -1148,6 +1203,20 @@ fileIn.onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileRea
     if(!db.water||typeof db.water!=='object'||Array.isArray(db.water))db.water={goal:8,log:{}};
     db.water.goal=Math.min(30,Math.max(1,Math.floor(+db.water.goal)||8));
     if(!db.water.log||typeof db.water.log!=='object')db.water.log={};
+    if(!Array.isArray(db.counters))db.counters=[];
+    db.counters=db.counters.filter(c=>c&&typeof c==='object');
+    db.counters.forEach(c=>{
+      c.id=c.id||(Math.random().toString(36).slice(2,9));
+      c.name=String(c.name==null?'Counter':c.name).slice(0,40);
+      c.step=Math.min(100000,Math.max(1,Math.floor(+c.step)||10));
+      c.target=Math.min(100000,Math.max(c.step,Math.floor(+c.target)||c.step));
+      if(!c.marks||typeof c.marks!=='object'||Array.isArray(c.marks))c.marks={};
+      c.unit=(c.unit==='sec'||c.unit==='min')?c.unit:'count';
+      c.live=(c.live===true);   /* junk truthy strings don't make a timer */
+      if(!c.t||typeof c.t!=='object'||Array.isArray(c.t))c.t=null;
+      else{c.t.base=Math.min(864000000,Math.max(0,+c.t.base||0));c.t.start=Math.max(0,+c.t.start||0);
+        if(!c.t.base&&!c.t.start)c.t=null;}
+    });
     save();renderWeek();renderNotes();toast('📥 Backup restored');
   }catch{SFX.error();toast('⚠️ Invalid file');}};
   r.readAsText(f);};
@@ -1200,16 +1269,18 @@ const hideEl=el=>el.classList.add('hide');
 
 function switchTab(t){
   nbCur=null;current=null;
-  [weekView,dayView,nbList,nbEditor,setView,repView,plView].forEach(hideEl);
+  [weekView,dayView,nbList,nbEditor,setView,repView,plView,ctView].forEach(hideEl);
   tabWorkout.classList.toggle('on',t==='w');
   tabNotes.classList.toggle('on',t==='n');
   tabSettings.classList.toggle('on',t==='s');
   tabReport.classList.toggle('on',t==='r');
   tabPlanner.classList.toggle('on',t==='p');
+  tabCounters.classList.toggle('on',t==='c');
   if(t==='w'){show(weekView);renderWeek();}
   else if(t==='n'){show(nbList);renderNotes();}
   else if(t==='r'){show(repView);repOffset=0;renderReport();}
   else if(t==='p'){show(plView);renderPlanner();}
+  else if(t==='c'){show(ctView);renderCounters();}
   else {show(setView);renderThemes();renderRest();paintBackup();paintOffline();paintNag();}
   SFX.click();scrollTo(0,0);
 }
@@ -1218,6 +1289,7 @@ tabNotes.onclick=()=>switchTab('n');
 tabSettings.onclick=()=>switchTab('s');
 tabReport.onclick=()=>switchTab('r');
 tabPlanner.onclick=()=>switchTab('p');
+tabCounters.onclick=()=>switchTab('c');
 
 
 
@@ -1615,14 +1687,15 @@ let armLog=false,armAll=false;
 resetLog.onclick=()=>{
   if(!armLog){armLog=true;resetLog.textContent='🔄 Tap again to reset progress';SFX.error();
     clearTimeout(resetLog.t);resetLog.t=setTimeout(()=>{armLog=false;resetLog.textContent='🔄 Reset progress & streaks only';},3200);return;}
-  db.log={};db.snap={};db.rlog={};db.water.log={};armLog=false;resetLog.textContent='🔄 Reset progress & streaks only';
+  db.log={};db.snap={};db.rlog={};db.water.log={};db.counters.forEach(c=>{c.marks={};c.t=null;});
+  armLog=false;resetLog.textContent='🔄 Reset progress & streaks only';
   save();SFX.delete();toast('🔄 Progress and streaks cleared');
 };
 resetAll.onclick=()=>{
   if(!armAll){armAll=true;resetAll.textContent='🗑 Tap again to ERASE EVERYTHING';SFX.error();
     clearTimeout(resetAll.t);resetAll.t=setTimeout(()=>{armAll=false;resetAll.textContent='🗑 Erase everything (plan, notes, records)';},3500);return;}
   db={plan:[[],[],[],[],[],[],[]],log:{},snap:{},prs:{},notes:[],
-    planner:{days:[[],[],[],[],[],[],[]],todo:[],daily:[]},rlog:{},water:{goal:8,log:{}}};
+    planner:{days:[[],[],[],[],[],[],[]],todo:[],daily:[]},rlog:{},water:{goal:8,log:{}},counters:[]};
   armAll=false;resetAll.textContent='🗑 Erase everything (plan, notes, records)';
   save();SFX.delete();toast('🗑 Everything has been erased');
 };
@@ -1957,6 +2030,130 @@ function inlineEdit(list,attr,getText,setText){
 inlineEdit(plList,'data-plname',i=>plSel()[i]?plSel()[i].title:null,(i,v)=>plSel()[i].title=v);
 inlineEdit(todoList,'data-tname',i=>db.planner.todo[i]?db.planner.todo[i].text:null,(i,v)=>db.planner.todo[i].text=v);
 
+/* ===== Counters: tap milestones (10, 20, 30…) as you reach them.
+   Marks persist until you hit 🔄 — the whole point is not to lose count. */
+function ctSteps(c){
+  const out=[];const st=Math.max(1,c.step||10),tg=Math.max(st,c.target||st);
+  let v=st;
+  while(v<tg){out.push(v);v+=st;}
+  if(out[out.length-1]!==tg)out.push(tg);   // always land exactly on the target
+  return out.slice(0,60);
+}
+const ctCur=c=>Math.max(0,...ctSteps(c).filter(v=>c.marks&&c.marks[v]));
+/* v22: counters can also count TIME — manually (sec/min chips) or via a live stopwatch. */
+const ctLbl=(c,v)=>v+((c&&c.unit)==='sec'?'s':(c&&c.unit)==='min'?'m':'');
+const ctClock=ms=>{const s=Math.max(0,Math.floor(ms/1000));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),r=s%60;
+  return (h?h+':'+String(m).padStart(2,'0'):m)+':'+String(r).padStart(2,'0');};
+const ctElapsedMs=c=>c&&c.t?Math.max(0,(+c.t.base||0)+(c.t.start?Date.now()-c.t.start:0)):0;
+const ctElapsedUnits=c=>Math.floor(ctElapsedMs(c)/((c&&c.unit)==='min'?60000:1000));
+const ctRunning=c=>!!(c&&c.live&&c.t&&+c.t.start>0);
+function renderCounters(){
+  ctEmpty.style.display=db.counters.length?'none':'block';
+  ctList.innerHTML='';
+  db.counters.forEach((c,i)=>{
+    const steps=ctSteps(c),cur=ctCur(c);
+    const pct=c.target?Math.min(100,Math.round(cur/c.target*100)):0;
+    const el=document.createElement('div');
+    el.className='ctr';
+    el.innerHTML=`<div class="row" style="gap:8px;flex-wrap:nowrap">
+        <b class="plname" data-cname="${i}" contenteditable="true" spellcheck="false" title="Tap to rename">${esc(c.name)}</b>
+        <span style="font-size:12.5px;color:var(--accent);font-weight:bold;white-space:nowrap">${cur}/${ctLbl(c,c.target)}</span>
+        ${c.live?`<span data-ctel="${c.id}" style="font-size:12.5px;color:var(--accent2);font-weight:bold;white-space:nowrap">${ctClock(ctElapsedMs(c))}</span>
+        <button class="timerbtn" data-clive="${i}" title="${ctRunning(c)?'Pause timer':'Start timer'}">${ctRunning(c)?'⏸':'▶'}</button>`:''}
+        <button class="timerbtn" data-creset="${i}" title="Reset to zero">🔄</button>
+        <button class="danger" data-cdel="${i}" title="Delete counter">🗑</button>
+      </div>
+      <div class="ctrchips">${steps.map(v=>
+        `<div class="set ${c.marks&&c.marks[v]?'on':''}" data-chip="${i}" data-v="${v}" title="${ctLbl(c,v)}">${ctLbl(c,v)}</div>`).join('')}</div>
+      <div class="wbar" style="margin-top:9px"><i style="width:${pct}%"></i></div>`;
+    ctList.appendChild(el);
+  });
+  ctSyncTimer();   // keep the 500ms heartbeat aligned with whatever is running
+}
+ctAdd.onclick=()=>{
+  const n=ctName.value.trim().slice(0,40)||'';
+  const st=Math.floor(+ctStep.value)||0;   // empty/NaN -> 0 -> rejected below
+  const tg=Math.floor(+ctTarget.value)||0;
+  const md=(ctType&&ctType.value)||'count';
+  const unit=md.startsWith('sec')?'sec':md.startsWith('min')?'min':'count';
+  const live=/Live$/.test(md);
+  if(!n){SFX.error();toast('⚠️ Name the counter (e.g. Pull-ups).');return;}
+  if(st<1){SFX.error();toast('⚠️ Set a step (e.g. 10).');return;}
+  if(tg<1){SFX.error();toast('⚠️ Set a target (e.g. 40).');return;}
+  const nc={id:uid(),name:n,unit,live,t:null,
+    step:Math.min(100000,st),target:Math.max(Math.min(100000,st),Math.min(100000,tg)),marks:{}};
+  db.counters.push(nc);
+  ctName.value='';ctStep.value='';ctTarget.value='';
+  save();renderCounters();ctName.focus();SFX.add();
+  toast(live?`⏱ Timer "${n}" added — press ▶ and milestones tick off by themselves!`
+            :`🔢 Counter "${n}" added — tap ${ctLbl(nc,ctSteps(nc)[0])} when you get there!`);
+};
+ctName.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)ctStep.focus();});
+ctStep.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)ctTarget.focus();});
+ctTarget.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing)ctAdd.click();});
+ctList.addEventListener('click',e=>{
+  const ch=e.target.closest('[data-chip]');
+  if(ch){
+    const c=db.counters[+ch.dataset.chip];if(!c)return;
+    const v=+ch.dataset.v;
+    c.marks=c.marks||{};
+    if(c.marks[v])delete c.marks[v];else c.marks[v]=true;
+    const on=!!c.marks[v];save();
+    if(on&&v>=c.target){SFX.complete();
+      if(navigator.vibrate)navigator.vibrate([25,60,25,60,45]);
+      toast(`🎉 "${c.name}" target reached — ${ctLbl(c,c.target)}!`);}
+    else on?SFX.check():SFX.uncheck();
+    renderCounters();return;
+  }
+  const lv=e.target.closest('[data-clive]');
+  if(lv){const c=db.counters[+lv.dataset.clive];if(!c||!c.live)return;
+    if(ctRunning(c)){c.t={base:ctElapsedMs(c),start:0};save();renderCounters();ctSyncTimer();
+      SFX.uncheck();toast('⏸ Timer paused');return;}
+    if(ctElapsedUnits(c)>=c.target){SFX.error();toast(`⚠️ Target reached — hit 🔄 to run "${c.name}" again.`);return;}
+    c.t={base:c.t?+c.t.base||0:0,start:Date.now()};save();renderCounters();ctSyncTimer();
+    SFX.open();toast('▶ Timer started — milestones tick themselves off');return;}
+  const rs=e.target.closest('[data-creset]');
+  if(rs){const c=db.counters[+rs.dataset.creset];if(!c)return;
+    const idle=!Object.keys(c.marks||{}).length&&(!c.t||(!c.t.base&&!c.t.start));
+    if(idle){SFX.error();toast('⚠️ Already at zero.');return;}
+    if(!confirm(`Reset "${c.name}" back to zero?`))return;
+    c.marks={};c.t=null;save();renderCounters();ctSyncTimer();SFX.uncheck();toast('🔄 Back to zero');return;}
+  const dl=e.target.closest('[data-cdel]');
+  if(dl){const i=+dl.dataset.cdel,c=db.counters[i];if(!c)return;
+    if(!confirm(`Delete counter "${c.name}"?`))return;
+    db.counters.splice(i,1);save();renderCounters();SFX.delete();toast('🗑 Counter deleted');}
+});
+inlineEdit(ctList,'data-cname',i=>db.counters[i]?db.counters[i].name:null,(i,v)=>db.counters[i].name=v);
+
+/* Live timers: a 500ms heartbeat. Passed milestones mark themselves (+chime);
+   hitting the target freezes the stopwatch on the target with the usual 🎉.
+   The readout is patched in place — no re-render while you're renaming. */
+let ctTimer=null;
+function ctTick(){
+  let changed=false;const done=[];
+  db.counters.forEach(c=>{
+    if(!ctRunning(c))return;
+    const e=ctElapsedUnits(c);c.marks=c.marks||{};
+    let hit=false;
+    ctSteps(c).forEach(v=>{if(v<=e&&!c.marks[v]){c.marks[v]=true;changed=true;hit=true;}});
+    if(e>=c.target){c.t={base:c.target*(c.unit==='min'?60000:1000),start:0};changed=true;done.push(c);}
+    else if(hit)SFX.check();
+  });
+  if(changed){save();renderCounters();
+    done.forEach(c=>{SFX.complete();if(navigator.vibrate)navigator.vibrate([25,60,25,60,45]);
+      toast(`🎉 "${c.name}" target reached — ${ctLbl(c,c.target)}!`);});
+  }else db.counters.forEach(c=>{if(!c.live)return;
+    const el=ctList.querySelector(`[data-ctel="${c.id}"]`);if(el)el.textContent=ctClock(ctElapsedMs(c));});
+  ctSyncTimer();
+}
+function ctSyncTimer(){
+  const anyRun=db.counters.some(ctRunning);
+  if(anyRun&&!ctTimer)ctTimer=setInterval(ctTick,500);
+  if(!anyRun&&ctTimer){clearInterval(ctTimer);ctTimer=null;}
+}
+renderCounters();   // paint the Counters tab once at boot so it's ready (and timers resume)
+ctSyncTimer();   // a timer that was still running when the app was closed keeps counting
+
 todoAdd.onclick=()=>{
   const t=todoIn.value.trim().slice(0,120);
   if(!t){SFX.error();toast('⚠️ Enter a task.');return;}
@@ -1988,7 +2185,7 @@ todoClear.onclick=()=>{
 
 bindNag();paintNag();
 gcSnapshots();
-const BUILD='v20 • 2026-09-20';
+const BUILD='v23 • 2026-09-20';
 try{
   buildTag.textContent='Build '+BUILD;
   // Show only the file name, never the whole URL (preview links are huge tokens).
@@ -2002,6 +2199,5 @@ console.log('%cWorkout Tracker — Build '+BUILD+' — single file, no external 
 tick();setInterval(tick,1000);renderWeek();checkBackupNag();
 if(dbRecovered) setTimeout(()=>toast('⚠️ Saved data was unreadable — started fresh. A copy was kept.'),700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a409a33048d6d0c7',t:'MTc5MDMzNTIwMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","spa":2}' crossorigin="anonymous"></script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a432721caee4d9e0',t:'MTc5MDc2MzEwOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
