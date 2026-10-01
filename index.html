@@ -551,11 +551,6 @@
       <div class="row" id="restOpts"></div>
     </div>
 
-    <div class="card">
-      <div class="sechead">⏳ Catch-up window</div>
-      <div class="secnote">If you forget to tick your sets before midnight, you can still complete yesterday's workout until 12:00 the next day — so a real workout never breaks your streak.</div>
-      <button class="ghost" id="graceBtn" data-nosfx="1" style="width:100%">⏳ Catch-up: On</button>
-    </div>
 
     <div class="card">
       <div class="sechead">🔊 Sound</div>
@@ -602,6 +597,10 @@
       <span id="dayTag"></span>
     </div>
     <div class="card addcard">
+      <div class="row" id="dayCatchRow" style="display:none;flex-wrap:nowrap;gap:8px;align-items:center;margin-bottom:8px">
+        <span style="font-size:12px;color:var(--muted);white-space:nowrap">📅 Catch-up — log for:</span>
+        <input type="date" id="dayLogDate" style="flex:1;min-width:0;max-width:180px">
+      </div>
       <div id="lockMsg"></div>
       <div class="row">
         <input id="exName" placeholder="Exercise name (e.g. Push-ups)" style="flex:1;min-width:180px"
@@ -814,16 +813,9 @@ let current=null;
 const plan=i=>db.plan[i]||(db.plan[i]=[]);
 const logToday=()=>db.log[todayKey()]||(db.log[todayKey()]={});
 const logFor=k=>db.log[k]||(db.log[k]={});
-/* The day a tap writes to. Normally today; until 12:00 you may still complete
-   yesterday's workout if you forgot to tick it before going to sleep. */
-const GKEY='workout_grace';
-const graceOn=()=>localStorage.getItem(GKEY)!=='0';
-function targetKey(wd){
-  if(wd===wdToday())return todayKey();
-  const y=shiftKey(todayKey(),-1);
-  if(graceOn()&&wd===wdOf(y)&&+iranNow().hour<12)return y;
-  return null;
-}
+/* The week grid only lets TODAY collect ticks. Inside a day page the date
+   picker rules (dayTarget): any past date may be caught up — v24. */
+function targetKey(wd){return wd===wdToday()?todayKey():null;}
 function setsOf(id,n,key){
   const L=db.log[key||todayKey()]||{};
   let a=L[id];
@@ -899,10 +891,13 @@ function snapshotDays(id){
 /* No startup cleanup: every frozen day is kept verbatim. */
 function gcSnapshots(){}
 
-function freezeDay(k){        // called the first time a set is ticked on day k
+function freezeDay(k,items){  // called the first time a set is ticked on day k
+  /* v24: a catch-up logs the workout you ACTUALLY did (the open day page),
+     so the snapshot comes from that page — merged by id, never overwriting. */
   if(!db.snap)db.snap={};
-  if(db.snap[k])return;
-  db.snap[k]=JSON.parse(JSON.stringify(db.plan[wdOf(k)]||[]));
+  if(!db.snap[k])db.snap[k]=[];
+  (items||db.plan[wdOf(k)]||[]).forEach(e=>{
+    if(!db.snap[k].some(x=>x.id===e.id))db.snap[k].push(JSON.parse(JSON.stringify(e)));});
 }
 // A day counts for the streak ONLY if every set of every exercise planned for that weekday is checked.
 function dayDone(k){
@@ -967,20 +962,40 @@ function fillCopy(){
   copyFrom.innerHTML=NAMES.map((n,i)=>i===current?'':
     `<option value="${i}">Day ${i+1} — ${n} (${(db.plan[i]||[]).length})</option>`).join('');
 }
-function openDay(i){SFX.open();current=i;weekView.classList.add('hide');dayView.classList.remove('hide');fillCopy();renderDay();scrollTo(0,0);}
+function openDay(i){SFX.open();current=i;weekView.classList.add('hide');dayView.classList.remove('hide');fillCopy();
+  if(i!==wdToday())dayLogDate.value=shiftKey(todayKey(),-((wdToday()-i+7)%7));  // preset: that weekday's most recent date
+  renderDay();scrollTo(0,0);}
+/* The date a tap on the OPEN day page writes to. Today for today's page;
+   for other days it's the picker's value — any date up to and including today. */
+const dayTarget=()=>{
+  if(current===null||current===wdToday())return todayKey();
+  const v=(dayLogDate.value||'').trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(v)&&v<=todayKey()?v:null;
+};
+dayLogDate.addEventListener('change',()=>{
+  if(dayLogDate.value>todayKey()){dayLogDate.value=todayKey();SFX.error();
+    toast("🔒 The future hasn't happened — today is the latest date.");}
+  renderDay();
+});
 backBtn.onclick=()=>{SFX.back();current=null;dayView.classList.add('hide');weekView.classList.remove('hide');renderWeek();};
 
 function renderDay(){
   const i=current, items=plan(i);
-  const tk=targetKey(i), isT=!!tk, isGrace=isT&&tk!==todayKey();
+  const tk=dayTarget(), isT=!!tk, isCatch=isT&&tk!==todayKey();
   dayTitle.textContent=`Day ${i+1} — ${NAMES[i]}`;
-  dayTag.innerHTML=isGrace?'<span class="tag l">⏳ Catch-up</span>'
-    :(isT?'<span class="tag t">Today</span>':'<span class="tag l">🔒 Check-off disabled</span>');
-  lockMsg.innerHTML=isGrace
-    ? '<div class="notice">⏳ Catch-up window: you can still complete yesterday\'s workout until 12:00 today.</div>'
-    : (isT
+  dayCatchRow.style.display=(i===wdToday())?'none':'flex';
+  dayLogDate.max=todayKey();
+  const onTodaysPage=(i===wdToday());
+  dayTag.innerHTML=isCatch?'<span class="tag l">📅 Catch-up</span>'
+    :(onTodaysPage?'<span class="tag t">Today</span>'
+    :(isT?'<span class="tag l">📅 Today</span>':'<span class="tag l">🔒 Pick a date</span>'));
+  lockMsg.innerHTML=isCatch
+    ? `<div class="notice">📅 Logging sets for <b>${jal(tk,{weekday:'long',day:'numeric',month:'long'})}</b> — ticks, report and streak all count for that date. Pick another date above to move it.</div>`
+    : (!onTodaysPage&&isT
+    ? '<div class="notice">📅 Logging this workout for <b>today</b> — it counts as today\'s training. Pick a past date above to backfill a missed day.</div>'
+    : (onTodaysPage
     ? '<div class="notice ok">This is today ✔ you can check off your sets.</div>'
-    : '<div class="notice">You can add or edit exercises here, but checking off sets is only possible on the current day (Iran time).</div>');
+    : '<div class="notice">Pick today or a past date above to check off this workout.</div>'));
   exList.innerHTML='';
   empty.style.display=items.length?'none':'block';
   items.forEach((e,ix)=>{
@@ -1088,17 +1103,17 @@ exList.addEventListener('click',e=>{
       setTimeout(()=>restBar.classList.remove('nudge'),450);
       return;
     }
-    const tk=targetKey(current);
-    if(!tk){SFX.error();toast('🔒 You can only check off sets on today (Iran time).');return;}
+    const tk=dayTarget();
+    if(!tk){SFX.error();toast('🔒 Pick today or a past date above to check off sets.');return;}
     const ex=plan(current)[+t.dataset.ex], ns=+ex.sets||1, si=+t.dataset.set;
     const L=logFor(tk), arr=setsOf(ex.id,ns,tk);
-    freezeDay(tk);
+    freezeDay(tk,plan(current));
     arr[si]=!arr[si]; L[ex.id]=arr; save(); renderDay();
     if(arr[si]){
       const items=plan(current);
       const allDone=items.every(x=>{const n=+x.sets||1;return doneSets(x.id,n,tk)>=n;});
       // Rest after every completed set — except when the whole day is finished.
-      if(restLen>0&&tk===todayKey()&&!allDone){
+      if(restLen>0&&!allDone){
         const n2=+ex.sets||1, d2=arr.filter(Boolean).length;
         const more=d2<n2;
         startTimer(restLen,
@@ -1645,12 +1660,6 @@ async function paintOffline(){
   }catch(e){}
 }
 
-/* ===== Catch-up toggle ===== */
-function paintGrace(){graceBtn.textContent=graceOn()?'⏳ Catch-up: On (until 12:00)':'🚫 Catch-up: Off';}
-graceBtn.onclick=()=>{localStorage.setItem(GKEY,graceOn()?'0':'1');paintGrace();SFX.check();
-  toast(graceOn()?'⏳ Catch-up window enabled':'🚫 Catch-up window disabled');};
-paintGrace();
-
 /* ===== Backup reminder ===== */
 const BKEY='workout_last_backup';
 function markBackup(){localStorage.setItem(BKEY,todayKey());paintBackup();}
@@ -2185,7 +2194,7 @@ todoClear.onclick=()=>{
 
 bindNag();paintNag();
 gcSnapshots();
-const BUILD='v23 • 2026-09-20';
+const BUILD='v24 • 2026-09-20';
 try{
   buildTag.textContent='Build '+BUILD;
   // Show only the file name, never the whole URL (preview links are huge tokens).
@@ -2199,5 +2208,5 @@ console.log('%cWorkout Tracker — Build '+BUILD+' — single file, no external 
 tick();setInterval(tick,1000);renderWeek();checkBackupNag();
 if(dbRecovered) setTimeout(()=>toast('⚠️ Saved data was unreadable — started fresh. A copy was kept.'),700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a432721caee4d9e0',t:'MTc5MDc2MzEwOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a43c59c5acc70407',t:'MTc5MDg2Njk3MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
