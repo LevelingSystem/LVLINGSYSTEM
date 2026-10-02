@@ -597,9 +597,9 @@
       <span id="dayTag"></span>
     </div>
     <div class="card addcard">
-      <div class="row" id="dayCatchRow" style="display:none;flex-wrap:nowrap;gap:8px;align-items:center;margin-bottom:8px">
-        <span style="font-size:12px;color:var(--muted);white-space:nowrap">📅 Catch-up — log for:</span>
-        <input type="date" id="dayLogDate" style="flex:1;min-width:0;max-width:180px">
+      <div class="row" id="dayStartRow" style="display:none;flex-wrap:nowrap;gap:8px;align-items:center;margin-bottom:8px">
+        <button class="timerbtn" id="dayStart" style="flex:1;min-height:46px;font-size:14px;display:none">▶ Start this workout — counts for today</button>
+        <button class="ghost" id="dayRestart" style="display:none;min-height:46px;white-space:nowrap" title="Reset today's ticks of this workout and redo it">↻ Redo</button>
       </div>
       <div id="lockMsg"></div>
       <div class="row">
@@ -716,7 +716,7 @@ document.addEventListener('pointerdown',e=>{
 
 const KEY='workout_program_v3';
 const BLANK=()=>({plan:[[],[],[],[],[],[],[]],log:{},snap:{},prs:{},notes:[],
-  planner:{days:[[],[],[],[],[],[],[]],todo:[],daily:[]},rlog:{},water:{goal:8,log:{}},counters:[]});
+  planner:{days:[[],[],[],[],[],[],[]],todo:[],daily:[]},rlog:{},water:{goal:8,log:{}},counters:[],session:{}});
 /* Never let damaged storage white-screen the app. If the saved data cannot be
    parsed we keep a copy under a rescue key (so nothing is silently destroyed)
    and start from a clean slate instead of throwing. */
@@ -813,6 +813,10 @@ let current=null;
 const plan=i=>db.plan[i]||(db.plan[i]=[]);
 const logToday=()=>db.log[todayKey()]||(db.log[todayKey()]={});
 const logFor=k=>db.log[k]||(db.log[k]={});
+/* v25 sessions: keep only today's activations — stale/junk is pruned at boot. */
+if(!db.session||typeof db.session!=='object'||Array.isArray(db.session))db.session={};
+Object.keys(db.session).forEach(k=>{if(!/^[0-6]$/.test(k)||db.session[k]!==todayKey())delete db.session[k];});
+
 /* The week grid only lets TODAY collect ticks. Inside a day page the date
    picker rules (dayTarget): any past date may be caught up — v24. */
 function targetKey(wd){return wd===wdToday()?todayKey():null;}
@@ -931,17 +935,17 @@ function renderWeek(){
   days.innerHTML='';
   for(let i=0;i<7;i++){
     const items=plan(i), isT=i===t;
-    const gk=targetKey(i), isGrace=!!gk&&gk!==todayKey();
+    const gk=targetKey(i), act=!!(db.session&&db.session[i]===todayKey());
     const totSets=items.reduce((s,e)=>s+(+e.sets||1),0);
-    const done=(isT||isGrace)?items.reduce((s,e)=>s+doneSets(e.id,+e.sets||1,gk||todayKey()),0):0;
-    const pct=(isT||isGrace)&&totSets?Math.round(done/totSets*100):0;
+    const done=(isT||act)?items.reduce((s,e)=>s+doneSets(e.id,+e.sets||1,gk||todayKey()),0):0;
+    const pct=(isT||act)&&totSets?Math.round(done/totSets*100):0;
     const el=document.createElement('div');
     el.className='day'+(isT?' today':'');
-    el.innerHTML=`<span class="tag ${isT?'t':'l'}">${isT?'Today ✔':'🔒 No check'}</span>
+    el.innerHTML=`<span class="tag ${isT||act?'t':'l'}">${isT?'Today ✔':(act?'🔥 Active':'🔒 No check')}</span>
       <div class="n">Day ${i+1}</div>
       <div class="d">${NAMES[i]}</div>
       <div class="p"><i style="width:${pct}%"></i></div>
-      <div class="c">${items.length?((isT||isGrace)?`${done} of ${totSets} sets done (${pct}%)`:`${items.length} exercises • ${totSets} sets`):'No exercises'}</div>`;
+      <div class="c">${items.length?((isT||act)?`${done} of ${totSets} sets done (${pct}%)`:`${items.length} exercises • ${totSets} sets`):'No exercises'}</div>`;
     el.onclick=()=>openDay(i);
     days.appendChild(el);
   }
@@ -962,40 +966,46 @@ function fillCopy(){
   copyFrom.innerHTML=NAMES.map((n,i)=>i===current?'':
     `<option value="${i}">Day ${i+1} — ${n} (${(db.plan[i]||[]).length})</option>`).join('');
 }
-function openDay(i){SFX.open();current=i;weekView.classList.add('hide');dayView.classList.remove('hide');fillCopy();
-  if(i!==wdToday())dayLogDate.value=shiftKey(todayKey(),-((wdToday()-i+7)%7));  // preset: that weekday's most recent date
-  renderDay();scrollTo(0,0);}
-/* The date a tap on the OPEN day page writes to. Today for today's page;
-   for other days it's the picker's value — any date up to and including today. */
-const dayTarget=()=>{
-  if(current===null||current===wdToday())return todayKey();
-  const v=(dayLogDate.value||'').trim();
-  return /^\d{4}-\d{2}-\d{2}$/.test(v)&&v<=todayKey()?v:null;
+function openDay(i){SFX.open();current=i;weekView.classList.add('hide');dayView.classList.remove('hide');fillCopy();renderDay();scrollTo(0,0);}
+/* v25 — workout sessions. One ▶ Start button per day page, no limits: any of
+   the 7 days can be started any time, and its sets count as TODAY's training.
+   Past dates and streak history are NEVER touched. Sessions expire at midnight. */
+const sessionOn=i=>!!(db.session&&db.session[i]===todayKey());
+const pageWriteKey=i=>(i===wdToday()||sessionOn(i))?todayKey():null;
+dayStart.onclick=()=>{
+  if(current===null)return;
+  const i=current;
+  if(sessionOn(i)){SFX.error();toast('Already active ✔');return;}
+  if(!db.session)db.session={};
+  db.session[i]=todayKey();save();renderDay();renderWeek();
+  SFX.open();toast('▶ Workout started — every set counts for today!');
 };
-dayLogDate.addEventListener('change',()=>{
-  if(dayLogDate.value>todayKey()){dayLogDate.value=todayKey();SFX.error();
-    toast("🔒 The future hasn't happened — today is the latest date.");}
-  renderDay();
-});
+dayRestart.onclick=()=>{
+  if(current===null||(!sessionOn(current)&&current!==wdToday()))return;
+  const i=current,L=logFor(todayKey());
+  const hit=plan(i).filter(e=>{const a=L[e.id];return a===true||(Array.isArray(a)&&a.some(Boolean));});
+  if(!hit.length){SFX.error();toast('Nothing to reset — no ticks for this workout today.');return;}
+  if(!confirm('Reset today\'s ticks for this workout and redo it? (past days and streaks stay untouched)'))return;
+  hit.forEach(e=>{delete L[e.id];});
+  save();renderDay();renderWeek();SFX.uncheck();toast('↻ Clean slate — redo it, champ!');
+};
 backBtn.onclick=()=>{SFX.back();current=null;dayView.classList.add('hide');weekView.classList.remove('hide');renderWeek();};
 
 function renderDay(){
   const i=current, items=plan(i);
-  const tk=dayTarget(), isT=!!tk, isCatch=isT&&tk!==todayKey();
+  const tk=pageWriteKey(i), isT=!!tk;
+  const onTodaysPage=(i===wdToday()), active=sessionOn(i);
   dayTitle.textContent=`Day ${i+1} — ${NAMES[i]}`;
-  dayCatchRow.style.display=(i===wdToday())?'none':'flex';
-  dayLogDate.max=todayKey();
-  const onTodaysPage=(i===wdToday());
-  dayTag.innerHTML=isCatch?'<span class="tag l">📅 Catch-up</span>'
-    :(onTodaysPage?'<span class="tag t">Today</span>'
-    :(isT?'<span class="tag l">📅 Today</span>':'<span class="tag l">🔒 Pick a date</span>'));
-  lockMsg.innerHTML=isCatch
-    ? `<div class="notice">📅 Logging sets for <b>${jal(tk,{weekday:'long',day:'numeric',month:'long'})}</b> — ticks, report and streak all count for that date. Pick another date above to move it.</div>`
-    : (!onTodaysPage&&isT
-    ? '<div class="notice">📅 Logging this workout for <b>today</b> — it counts as today\'s training. Pick a past date above to backfill a missed day.</div>'
-    : (onTodaysPage
+  dayStartRow.style.display=(!onTodaysPage||active)?'flex':'none';
+  dayStart.style.display=(!onTodaysPage&&!active)?'block':'none';
+  dayRestart.style.display=(!onTodaysPage&&active)?'block':'none';
+  dayTag.innerHTML=onTodaysPage?'<span class="tag t">Today</span>'
+    :(active?'<span class="tag t">🔥 Active now</span>':'<span class="tag l">🔒 Not started</span>');
+  lockMsg.innerHTML=onTodaysPage
     ? '<div class="notice ok">This is today ✔ you can check off your sets.</div>'
-    : '<div class="notice">Pick today or a past date above to check off this workout.</div>'));
+    : (active
+    ? '<div class="notice ok">🔥 Active — sets you tick count for <b>today</b>. ↻ Redo wipes today\'s ticks of this workout (past streaks are safe).</div>'
+    : '<div class="notice">Tap ▶ <b>Start</b> to run this workout now — every tick counts for today. Any day can be started, any time.</div>');
   exList.innerHTML='';
   empty.style.display=items.length?'none':'block';
   items.forEach((e,ix)=>{
@@ -1103,8 +1113,8 @@ exList.addEventListener('click',e=>{
       setTimeout(()=>restBar.classList.remove('nudge'),450);
       return;
     }
-    const tk=dayTarget();
-    if(!tk){SFX.error();toast('🔒 Pick today or a past date above to check off sets.');return;}
+    const tk=pageWriteKey(current);
+    if(!tk){SFX.error();toast('🔒 Tap ▶ Start first — this workout then runs as today\'s training.');return;}
     const ex=plan(current)[+t.dataset.ex], ns=+ex.sets||1, si=+t.dataset.set;
     const L=logFor(tk), arr=setsOf(ex.id,ns,tk);
     freezeDay(tk,plan(current));
@@ -1206,6 +1216,8 @@ fileIn.onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileRea
     for(let i=0;i<7;i++) if(!Array.isArray(o.plan[i])) o.plan[i]=[];
     db=o;
     if(!db.log||typeof db.log!=='object')db.log={};
+    if(!db.session||typeof db.session!=='object'||Array.isArray(db.session))db.session={};
+    Object.keys(db.session).forEach(k=>{if(!/^[0-6]$/.test(k)||db.session[k]!==todayKey())delete db.session[k];});
     if(!Array.isArray(db.notes))db.notes=[];
     if(!db.snap||typeof db.snap!=='object')db.snap={};
     if(!db.prs||typeof db.prs!=='object')db.prs={};
@@ -1696,7 +1708,7 @@ let armLog=false,armAll=false;
 resetLog.onclick=()=>{
   if(!armLog){armLog=true;resetLog.textContent='🔄 Tap again to reset progress';SFX.error();
     clearTimeout(resetLog.t);resetLog.t=setTimeout(()=>{armLog=false;resetLog.textContent='🔄 Reset progress & streaks only';},3200);return;}
-  db.log={};db.snap={};db.rlog={};db.water.log={};db.counters.forEach(c=>{c.marks={};c.t=null;});
+  db.log={};db.snap={};db.rlog={};db.water.log={};db.counters.forEach(c=>{c.marks={};c.t=null;});db.session={};
   armLog=false;resetLog.textContent='🔄 Reset progress & streaks only';
   save();SFX.delete();toast('🔄 Progress and streaks cleared');
 };
@@ -2194,7 +2206,7 @@ todoClear.onclick=()=>{
 
 bindNag();paintNag();
 gcSnapshots();
-const BUILD='v24 • 2026-09-20';
+const BUILD='v25 • 2026-09-20';
 try{
   buildTag.textContent='Build '+BUILD;
   // Show only the file name, never the whole URL (preview links are huge tokens).
@@ -2208,5 +2220,5 @@ console.log('%cWorkout Tracker — Build '+BUILD+' — single file, no external 
 tick();setInterval(tick,1000);renderWeek();checkBackupNag();
 if(dbRecovered) setTimeout(()=>toast('⚠️ Saved data was unreadable — started fresh. A copy was kept.'),700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a43c59c5acc70407',t:'MTc5MDg2Njk3MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a442143f5e39a876',t:'MTc5MDkyNzAzNw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
