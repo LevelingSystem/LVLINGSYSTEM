@@ -5,7 +5,7 @@
    The whole app is a single HTML file, so we only need to cache the document
    itself. Everything else (icons, styles, scripts) is already inlined.        */
 
-const CACHE = 'workout-v25';
+const CACHE = 'workout-v26';
 
 /* Install: pre-cache the app shell, then take over immediately. */
 self.addEventListener('install', e => {

@@ -599,6 +599,7 @@
     <div class="card addcard">
       <div class="row" id="dayStartRow" style="display:none;flex-wrap:nowrap;gap:8px;align-items:center;margin-bottom:8px">
         <button class="timerbtn" id="dayStart" style="flex:1;min-height:46px;font-size:14px;display:none">▶ Start this workout — counts for today</button>
+        <button class="ghost" id="dayStop" style="display:none;min-height:46px;white-space:nowrap" title="Stop this session (ticks stay saved)">⏹ Stop</button>
         <button class="ghost" id="dayRestart" style="display:none;min-height:46px;white-space:nowrap" title="Reset today's ticks of this workout and redo it">↻ Redo</button>
       </div>
       <div id="lockMsg"></div>
@@ -813,9 +814,14 @@ let current=null;
 const plan=i=>db.plan[i]||(db.plan[i]=[]);
 const logToday=()=>db.log[todayKey()]||(db.log[todayKey()]={});
 const logFor=k=>db.log[k]||(db.log[k]={});
-/* v25 sessions: keep only today's activations — stale/junk is pruned at boot. */
+/* v26 single-active-day session marker {day,date}; expires every midnight.
+   v25 stored a {dayIdx:date} map — migrate it. */
 if(!db.session||typeof db.session!=='object'||Array.isArray(db.session))db.session={};
-Object.keys(db.session).forEach(k=>{if(!/^[0-6]$/.test(k)||db.session[k]!==todayKey())delete db.session[k];});
+if(typeof db.session.date!=='string'){
+  const ks=Object.keys(db.session).filter(k=>db.session[k]===todayKey());
+  db.session=ks.length?{day:+ks[0],date:todayKey()}:{};
+}
+if(db.session.date!==todayKey()||!Number.isInteger(db.session.day)||db.session.day<-1||db.session.day>6)db.session={};
 
 /* The week grid only lets TODAY collect ticks. Inside a day page the date
    picker rules (dayTarget): any past date may be caught up — v24. */
@@ -935,7 +941,7 @@ function renderWeek(){
   days.innerHTML='';
   for(let i=0;i<7;i++){
     const items=plan(i), isT=i===t;
-    const gk=targetKey(i), act=!!(db.session&&db.session[i]===todayKey());
+    const gk=targetKey(i), act=activeDay()===i;
     const totSets=items.reduce((s,e)=>s+(+e.sets||1),0);
     const done=(isT||act)?items.reduce((s,e)=>s+doneSets(e.id,+e.sets||1,gk||todayKey()),0):0;
     const pct=(isT||act)&&totSets?Math.round(done/totSets*100):0;
@@ -967,21 +973,34 @@ function fillCopy(){
     `<option value="${i}">Day ${i+1} — ${n} (${(db.plan[i]||[]).length})</option>`).join('');
 }
 function openDay(i){SFX.open();current=i;weekView.classList.add('hide');dayView.classList.remove('hide');fillCopy();renderDay();scrollTo(0,0);}
-/* v25 — workout sessions. One ▶ Start button per day page, no limits: any of
-   the 7 days can be started any time, and its sets count as TODAY's training.
-   Past dates and streak history are NEVER touched. Sessions expire at midnight. */
-const sessionOn=i=>!!(db.session&&db.session[i]===todayKey());
-const pageWriteKey=i=>(i===wdToday()||sessionOn(i))?todayKey():null;
+/* v26 — exactly ONE active day at a time. ▶ Start on a page makes it the
+active day (and stops the previous one, even today's own page); ⏹ Stop locks
+everything. Its sets count as TODAY's training. Past dates/streaks are never
+touched; the marker expires at midnight and fresh days default to today. */
+const activeDay=()=>{
+  const s=db.session;
+  if(s&&s.date===todayKey()&&Number.isInteger(s.day)&&s.day>=-1&&s.day<=6)return s.day;
+  return wdToday();   // fresh day: today's page starts active
+};
+const sessionOn=i=>activeDay()===i;
+const pageWriteKey=i=>sessionOn(i)?todayKey():null;
 dayStart.onclick=()=>{
   if(current===null)return;
-  const i=current;
-  if(sessionOn(i)){SFX.error();toast('Already active ✔');return;}
-  if(!db.session)db.session={};
-  db.session[i]=todayKey();save();renderDay();renderWeek();
-  SFX.open();toast('▶ Workout started — every set counts for today!');
+  const i=current, prev=activeDay();
+  if(prev===i){SFX.error();toast('Already active ✔');return;}
+  db.session={day:i,date:todayKey()};save();renderDay();renderWeek();
+  SFX.open();
+  toast(prev===wdToday()
+    ? '▶ Workout started — every set counts for today!'
+    : `▶ Switched from ${NAMES[prev]} — every set counts for today!`);
+};
+dayStop.onclick=()=>{
+  if(current===null||!sessionOn(current))return;
+  db.session={day:-1,date:todayKey()};save();renderDay();renderWeek();
+  SFX.uncheck();toast('⏹ Stopped — ticks stay saved. Pick any day and press ▶ Start.');
 };
 dayRestart.onclick=()=>{
-  if(current===null||(!sessionOn(current)&&current!==wdToday()))return;
+  if(current===null||!sessionOn(current))return;
   const i=current,L=logFor(todayKey());
   const hit=plan(i).filter(e=>{const a=L[e.id];return a===true||(Array.isArray(a)&&a.some(Boolean));});
   if(!hit.length){SFX.error();toast('Nothing to reset — no ticks for this workout today.');return;}
@@ -996,16 +1015,20 @@ function renderDay(){
   const tk=pageWriteKey(i), isT=!!tk;
   const onTodaysPage=(i===wdToday()), active=sessionOn(i);
   dayTitle.textContent=`Day ${i+1} — ${NAMES[i]}`;
-  dayStartRow.style.display=(!onTodaysPage||active)?'flex':'none';
-  dayStart.style.display=(!onTodaysPage&&!active)?'block':'none';
-  dayRestart.style.display=(!onTodaysPage&&active)?'block':'none';
-  dayTag.innerHTML=onTodaysPage?'<span class="tag t">Today</span>'
-    :(active?'<span class="tag t">🔥 Active now</span>':'<span class="tag l">🔒 Not started</span>');
-  lockMsg.innerHTML=onTodaysPage
-    ? '<div class="notice ok">This is today ✔ you can check off your sets.</div>'
-    : (active
-    ? '<div class="notice ok">🔥 Active — sets you tick count for <b>today</b>. ↻ Redo wipes today\'s ticks of this workout (past streaks are safe).</div>'
-    : '<div class="notice">Tap ▶ <b>Start</b> to run this workout now — every tick counts for today. Any day can be started, any time.</div>');
+  dayStartRow.style.display='flex';
+  dayStart.style.display=active?'none':'block';
+  dayStop.style.display=active?'block':'none';
+  dayRestart.style.display=active?'block':'none';
+  dayTag.innerHTML=active
+    ? (onTodaysPage?'<span class="tag t">Today</span>':'<span class="tag t">🔥 Active now</span>')
+    : '<span class="tag l">🔒 Not started</span>';
+  lockMsg.innerHTML=active
+    ? (onTodaysPage
+      ? '<div class="notice ok">This is today ✔ you can check off your sets.</div>'
+      : '<div class="notice ok">🔥 Active — sets you tick count for <b>today</b>. ⏹ Stop deactivates; ↻ Redo wipes today\'s ticks (streaks are safe).</div>')
+    : (onTodaysPage
+      ? '<div class="notice">Today is not the active day — tap ▶ <b>Start</b> to switch training back here.</div>'
+      : '<div class="notice">Tap ▶ <b>Start</b> to make this the active day — its sets will count for today.</div>');
   exList.innerHTML='';
   empty.style.display=items.length?'none':'block';
   items.forEach((e,ix)=>{
@@ -1217,7 +1240,11 @@ fileIn.onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileRea
     db=o;
     if(!db.log||typeof db.log!=='object')db.log={};
     if(!db.session||typeof db.session!=='object'||Array.isArray(db.session))db.session={};
-    Object.keys(db.session).forEach(k=>{if(!/^[0-6]$/.test(k)||db.session[k]!==todayKey())delete db.session[k];});
+    if(typeof db.session.date!=='string'){
+      const ks=Object.keys(db.session).filter(k=>db.session[k]===todayKey());
+      db.session=ks.length?{day:+ks[0],date:todayKey()}:{};
+    }
+    if(db.session.date!==todayKey()||!Number.isInteger(db.session.day)||db.session.day<-1||db.session.day>6)db.session={};
     if(!Array.isArray(db.notes))db.notes=[];
     if(!db.snap||typeof db.snap!=='object')db.snap={};
     if(!db.prs||typeof db.prs!=='object')db.prs={};
@@ -2206,7 +2233,7 @@ todoClear.onclick=()=>{
 
 bindNag();paintNag();
 gcSnapshots();
-const BUILD='v25 • 2026-09-20';
+const BUILD='v26 • 2026-09-20';
 try{
   buildTag.textContent='Build '+BUILD;
   // Show only the file name, never the whole URL (preview links are huge tokens).
@@ -2220,5 +2247,5 @@ console.log('%cWorkout Tracker — Build '+BUILD+' — single file, no external 
 tick();setInterval(tick,1000);renderWeek();checkBackupNag();
 if(dbRecovered) setTimeout(()=>toast('⚠️ Saved data was unreadable — started fresh. A copy was kept.'),700);
 </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a442143f5e39a876',t:'MTc5MDkyNzAzNw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a44912f119afbb2e',t:'MTc5MTAwMDM4NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
